@@ -1,0 +1,9 @@
+{
+  "rds_host": "exercise-1.c9026mgcq5nu.eu-west-2.rds.amazonaws.com",
+  "rds_port": "3306",
+  "rds_user": "jester14jux",
+  "rds_password": "juniperhex23rubn",
+  "rds_db": "SWIFTIFY",
+  "server_host": "localhost",
+  "server_port": "8080"
+}
