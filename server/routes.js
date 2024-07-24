@@ -20,7 +20,7 @@ const search_us_zip = async function(req, res) {
     connection.query(`
         WITH LifeExpectancy AS (
             SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
-            FROM ZipTract z JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
             WHERE Zip = ?
             GROUP BY Zip
         )
@@ -48,7 +48,7 @@ const search_uk_zip = async function(req, res) {
     connection.query(`
         WITH LifeExpectancy AS (
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
-            FROM UKLifeExpectancy l JOIN UKAreasLookUp a ON l.LocalArea = a.LocalArea
+            FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
             WHERE Sector = ?
         )
         SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgHouseholdIncome, SocialRent
@@ -68,6 +68,33 @@ const search_uk_zip = async function(req, res) {
 // Route 3: GET /search_us_zips
 const search_us_zips = async function(req, res) {
     // Return all US zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code (ascending)
+    const avg_price = Number(req.query.avgPrice ?? 10000000);
+    const avg_rent = Number(req.query.avgRent ?? 50000);
+    const life_expectancy = Number(req.query.lifeExpectancy ?? 0);
+    const walkability = Number(req.query.walkability ?? 0);
+
+    connection.query(`
+        WITH LifeExpectancy AS (
+            SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+            FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            GROUP BY Zip
+        )
+        SELECT p.Zip AS Zip, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd, State, City
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
+        LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+        WHERE (AvgPrice < ? OR AvgPrice IS NULL) AND (AvgRent < ? OR AvgRent IS NULL) AND (LifeExpectancy > ? OR LifeExpectancy IS NULL) 
+        AND (NatWalkInd > ? OR NatWalkInd IS NULL)
+        ORDER BY State, Zip
+        `, [avg_price, avg_rent, life_expectancy, walkability],
+        (err, data) => {
+        if (err || data.length === 0) {
+          console.log(err);
+          res.json([]);
+        } else {
+          res.json(data);
+        }
+    });
 }
 
 // Route 4: GET /search_uk_zips
