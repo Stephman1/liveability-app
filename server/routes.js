@@ -12,25 +12,59 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
-// Route 1: GET /search_us_zips
-const search_us_zips = async function(req, res) {
-    // Return all US zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code (ascending)
+// Route 1: GET /search_us_zip/:zip
+const search_us_zip = async function(req, res) {
+    // Return all information on a given US zip code
+    const zipcode = req.params.zip;
 
+    connection.query(`
+        WITH LifeExpectancy AS (
+            SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy
+            FROM ZipTract z JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            WHERE Zip = ?
+            GROUP BY Zip
+        )
+        SELECT p.Zip AS Zip, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
+        LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+        WHERE p.Zip = ?
+        `, [zipcode], 
+        (err, data) => {
+        if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+        } else {
+        res.json(data[0]);
+        }
+    });
 }
 
-// Route 2: GET /search_uk_zips
+// Route 2: GET /search_uk_zip/:zip
+const search_uk_zip = async function(req, res) {
+    // Return all information on a given UK post code sector (zip code equivalent)
+}
+
+// Route 3: GET /search_us_zips
+const search_us_zips = async function(req, res) {
+    // Return all US zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code (ascending)
+}
+
+// Route 4: GET /search_uk_zips
 const search_uk_zips = async function(req, res) {
     // Return all UK postcode sectors (zip code equivalent) that match the given search query with parameters defaulted to those specified in API spec ordered by 
     // local area (state equivalent) and postcode sector (ascending)
 }
 
-// Route 3: GET /search_all_zips
+// Route 5: GET /search_all_zips
 const search_all_zips = async function(req, res) {
     // Return all US and UK zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code 
     // (ascending). A UK local area is considered analagous to a US state.
 }
 
 module.exports = {
+    search_us_zip,
+    search_uk_zip,
     search_us_zips,
     search_uk_zips,
     search_all_zips,
