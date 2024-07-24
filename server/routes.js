@@ -24,7 +24,7 @@ const search_us_zip = async function(req, res) {
             WHERE Zip = ?
             GROUP BY Zip
         )
-        SELECT p.Zip AS Zip, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability, State, City
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
@@ -51,7 +51,7 @@ const search_uk_zip = async function(req, res) {
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
             WHERE Sector = ?
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgHouseholdIncome, SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgBlendedSqftPrice AS Average_Blended_£_Sqft_Price, AvgHouseholdIncome, SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         WHERE p.Sector = ?
         `, [zipcode], 
@@ -80,7 +80,7 @@ const search_us_zips = async function(req, res) {
             FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
             GROUP BY Zip
         )
-        SELECT p.Zip AS Zip, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability, State, City
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
@@ -112,7 +112,7 @@ const search_uk_zips = async function(req, res) {
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgHouseholdIncome, SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgBlendedSqftPrice AS Average_Blended_£_Sqft_Price, AvgHouseholdIncome, SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         WHERE AvgAskingPrice < ? AND (AvgAskingRent < ? OR AvgAskingRent IS NULL) AND (LifeExpectancy > ? OR LifeExpectancy IS NULL)
         AND LocalArea LIKE ?
@@ -132,6 +132,40 @@ const search_uk_zips = async function(req, res) {
 const search_all_zips = async function(req, res) {
     // Return all US and UK zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code 
     // (ascending). A UK local area is considered analagous to a US state.
+    const avg_price = Number(req.query.avgPrice ?? 10000000);
+    const avg_rent = Number(req.query.avgRent ?? 50000);
+    const life_expectancy = Number(req.query.lifeExpectancy ?? 0);
+    
+    connection.query(`
+        WITH USLifeExpectancy AS (
+            SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+            FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            GROUP BY Zip
+        ), UKLifeExpectancy AS (
+            SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+            FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+        )
+        (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, LifeExpectancy, 'US' AS Country
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip
+        WHERE (AvgPrice < ? OR AvgPrice IS NULL) AND (AvgRent < ? OR AvgRent IS NULL) AND (LifeExpectancy > ? OR LifeExpectancy IS NULL))
+        UNION ALL
+        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) AS AvgPrice, 
+        (AvgAskingRent * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) AS AvgRent, LifeExpectancy, 'UK' AS Country
+        FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
+        WHERE (AvgAskingPrice * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) < ? 
+        AND ((AvgAskingRent * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) < ? OR AvgAskingRent IS NULL) 
+        AND (LifeExpectancy > ? OR LifeExpectancy IS NULL))
+        ORDER BY Country, State, Zip
+        `, [avg_price, avg_rent, life_expectancy],
+        (err, data) => {
+        if (err || data.length === 0) {
+          console.log(err);
+          res.json([]);
+        } else {
+          res.json(data);
+        }}
+    );
 }
 
 module.exports = {
