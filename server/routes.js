@@ -141,12 +141,12 @@ const search_all_zips = async function(req, res) {
 
     if (avg_price !== null) {
         us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
-        uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND AvgAskingPrice < (${avg_price} * 1.29)`);
+        uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
     }
 
     if (avg_rent !== null) {
         us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
-        uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND AvgAskingRent < (${avg_rent} * 1.29)`);
+        uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
     }
 
     if (life_expectancy !== null) {
