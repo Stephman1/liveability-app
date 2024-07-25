@@ -129,6 +129,9 @@ const search_uk_zips = async function(req, res) {
     const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
     const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
     const state = req.query.state ? `${req.query.state}`: null;
+    const avg_blended_sqft = req.query.avgBlendedSqft ? Number(req.query.avgBlendedSqft) : null;
+    const avg_household_income = req.query.avgHouseholdIncome ? Number(req.query.avgHouseholdIncome) : null;
+    const social_rent = req.query.socialRent ? Number(req.query.socialRent) : null;
 
     let uk_where_clauses = [];
 
@@ -148,6 +151,18 @@ const search_uk_zips = async function(req, res) {
         uk_where_clauses.push(`LocalArea IS NOT NULL AND LocalArea LIKE '%${state}%'`);
     }
 
+    if (avg_blended_sqft !== null) {
+        uk_where_clauses.push(`AvgBlendedSqftPrice IS NOT NULL AND (AvgBlendedSqftPrice * 1.29) < ${avg_blended_sqft}`);
+    }
+
+    if (avg_household_income !== null) {
+        uk_where_clauses.push(`AvgHouseholdIncome IS NOT NULL AND (AvgHouseholdIncome * 1.29) < ${avg_household_income}`);
+    }
+
+    if (social_rent !== null) {
+        uk_where_clauses.push(`SocialRent IS NOT NULL AND SocialRent < ${social_rent}`);
+    }
+
     let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
 
     connection.query(`
@@ -155,7 +170,7 @@ const search_uk_zips = async function(req, res) {
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         ${uk_where_clause}
         ORDER BY State, Zip
@@ -227,6 +242,12 @@ const search_all_zips = async function(req, res) {
           res.json(data);
         }}
     );
+}
+
+// Route 6: GET /search_similar_zips/:zip
+const search_similar_zips = async function(req, res) {
+    // Return all zip codes that are similar to the zip code input by the user ordered by state and zip code (ascending).
+    // POSSIBLE API CALL. MAY OR MAY NOT BE NEEDED.
 }
 
 module.exports = {
