@@ -24,7 +24,7 @@ const search_us_zip = async function(req, res) {
             WHERE Zip = ?
             GROUP BY Zip
         )
-        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
@@ -51,7 +51,7 @@ const search_uk_zip = async function(req, res) {
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
             WHERE Sector = ?
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         WHERE p.Sector = ?
         `, [zipcode, zipcode], 
@@ -104,7 +104,7 @@ const search_us_zips = async function(req, res) {
             FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
             GROUP BY Zip
         )
-        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
@@ -170,7 +170,7 @@ const search_uk_zips = async function(req, res) {
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         ${uk_where_clause}
         ORDER BY State, Zip
@@ -224,12 +224,12 @@ const search_all_zips = async function(req, res) {
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
         SELECT * FROM (
-        (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, LifeExpectancy, 'US' AS Country
+        (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'US' AS Country
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip 
         ${us_where_clause})
         UNION ALL
-        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, 'UK' AS Country
+        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country
         FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
         ${uk_where_clause})) AS combinedResults
         ORDER BY Country, State, Zip
