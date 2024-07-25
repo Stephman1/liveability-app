@@ -102,22 +102,41 @@ const search_us_zips = async function(req, res) {
 const search_uk_zips = async function(req, res) {
     // Return all UK postcode sectors (zip code equivalent) that match the given search query with parameters defaulted to those specified in API spec ordered by 
     // local area (state equivalent) and postcode sector (ascending)
-    const avg_price = Number(req.query.avgPrice ?? 10000000);
-    const avg_rent = Number(req.query.avgRent ?? 50000);
-    const life_expectancy = Number(req.query.lifeExpectancy ?? 0);
-    const state = req.query.state ? `%${req.query.state}%`: '%';
+    const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+    const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+    const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+    const state = req.query.state ? `${req.query.state}`: null;
+
+    let uk_where_clauses = [];
+
+    if (avg_price !== null) {
+        uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
+    }
+
+    if (avg_rent !== null) {
+        uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
+    }
+
+    if (life_expectancy !== null) {
+        uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+    }
+
+    if (state !== null) {
+        uk_where_clauses.push(`LocalArea IS NOT NULL AND LocalArea LIKE '%${state}%'`);
+    }
+
+    let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
 
     connection.query(`
         WITH LifeExpectancy AS (
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgBlendedSqftPrice AS Average_Blended_£_Sqft_Price, AvgHouseholdIncome, SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
-        WHERE AvgAskingPrice < ? AND (AvgAskingRent < ? OR AvgAskingRent IS NULL) AND (LifeExpectancy > ? OR LifeExpectancy IS NULL)
-        AND LocalArea LIKE ?
+        ${uk_where_clause}
         ORDER BY State, Zip
-        `, [avg_price, avg_rent, life_expectancy, state],
+        `, [],
         (err, data) => {
         if (err || data.length === 0) {
             console.log(err);
@@ -154,7 +173,6 @@ const search_all_zips = async function(req, res) {
         uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
     }
 
-    // Join all the where clauses with 'AND'
     let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
     let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
     
