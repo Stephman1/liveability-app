@@ -132,9 +132,31 @@ const search_uk_zips = async function(req, res) {
 const search_all_zips = async function(req, res) {
     // Return all US and UK zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code 
     // (ascending). A UK local area is considered analagous to a US state.
-    const avg_price = Number(req.query.avgPrice ?? 10000000);
-    const avg_rent = Number(req.query.avgRent ?? 50000);
-    const life_expectancy = Number(req.query.lifeExpectancy ?? 0);
+    const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+    const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+    const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+
+    let us_where_clauses = [];
+    let uk_where_clauses = [];
+
+    if (avg_price !== null) {
+        us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
+        uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND AvgAskingPrice < (${avg_price} * 1.29)`);
+    }
+
+    if (avg_rent !== null) {
+        us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+        uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND AvgAskingRent < (${avg_rent} * 1.29)`);
+    }
+
+    if (life_expectancy !== null) {
+        us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+        uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+    }
+
+    // Join all the where clauses with 'AND'
+    let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
+    let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
     
     connection.query(`
         WITH USLifeExpectancy AS (
@@ -145,19 +167,17 @@ const search_all_zips = async function(req, res) {
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
+        SELECT * FROM (
         (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, LifeExpectancy, 'US' AS Country
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
-        LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip
-        WHERE (AvgPrice < ? OR AvgPrice IS NULL) AND (AvgRent < ? OR AvgRent IS NULL) AND (LifeExpectancy > ? OR LifeExpectancy IS NULL))
+        LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip 
+        ${us_where_clause})
         UNION ALL
-        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) AS AvgPrice, 
-        (AvgAskingRent * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) AS AvgRent, LifeExpectancy, 'UK' AS Country
+        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, 'UK' AS Country
         FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
-        WHERE (AvgAskingPrice * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) < ? 
-        AND ((AvgAskingRent * (SELECT Currency2 FROM Currency WHERE Conversion='GBP-USD')) < ? OR AvgAskingRent IS NULL) 
-        AND (LifeExpectancy > ? OR LifeExpectancy IS NULL))
+        ${uk_where_clause})) AS combinedResults
         ORDER BY Country, State, Zip
-        `, [avg_price, avg_rent, life_expectancy],
+        `, [],
         (err, data) => {
         if (err || data.length === 0) {
           console.log(err);
