@@ -29,7 +29,7 @@ const search_us_zip = async function(req, res) {
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
         WHERE p.Zip = ?
-        `, [zipcode], 
+        `, [zipcode, zipcode], 
         (err, data) => {
         if (err || data.length === 0) {
             console.log(err);
@@ -43,7 +43,7 @@ const search_us_zip = async function(req, res) {
 // Route 2: GET /search_uk_zip/:zip
 const search_uk_zip = async function(req, res) {
     // Return all information on a given UK post code sector (zip code equivalent)
-    const zipcode = req.params.zip;
+    const zipcode = req.params.zip.toUpperCase();
 
     connection.query(`
         WITH LifeExpectancy AS (
@@ -51,10 +51,10 @@ const search_uk_zip = async function(req, res) {
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
             WHERE Sector = ?
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, AvgAskingPrice AS AvgPrice, AvgAskingRent AS AvgRent, LifeExpectancy, AvgBlendedSqftPrice AS Average_Blended_£_Sqft_Price, AvgHouseholdIncome, SocialRent
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         WHERE p.Sector = ?
-        `, [zipcode], 
+        `, [zipcode, zipcode], 
         (err, data) => {
         if (err || data.length === 0) {
             console.log(err);
@@ -68,11 +68,35 @@ const search_uk_zip = async function(req, res) {
 // Route 3: GET /search_us_zips
 const search_us_zips = async function(req, res) {
     // Return all US zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code (ascending)
-    const avg_price = Number(req.query.avgPrice ?? 10000000);
-    const avg_rent = Number(req.query.avgRent ?? 50000);
-    const life_expectancy = Number(req.query.lifeExpectancy ?? 0);
-    const walkability = Number(req.query.walkability ?? 0);
-    const state = req.query.state ? `%${req.query.state}%`: '%';
+    const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+    const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+    const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+    const walkability = req.query.walkability ? Number(req.query.walkability): null;
+    const state = req.query.state ? `${req.query.state}`: null;
+
+    let us_where_clauses = [];
+
+    if (avg_price !== null) {
+        us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
+    }
+
+    if (avg_rent !== null) {
+        us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+    }
+
+    if (life_expectancy !== null) {
+        us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+    }
+
+    if (walkability !== null) {
+        us_where_clauses.push(`NatWalkInd IS NOT NULL AND NatWalkInd > ${walkability}`);
+    }
+
+    if (state !== null) {
+        us_where_clauses.push(`State IS NOT NULL AND State = '${state}'`);
+    }
+
+    let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
 
     connection.query(`
         WITH LifeExpectancy AS (
@@ -84,10 +108,9 @@ const search_us_zips = async function(req, res) {
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
-        WHERE (AvgPrice < ? OR AvgPrice IS NULL) AND (AvgRent < ? OR AvgRent IS NULL) AND (LifeExpectancy > ? OR LifeExpectancy IS NULL) 
-        AND (NatWalkInd > ? OR NatWalkInd IS NULL) AND State LIKE ?
+        ${us_where_clause} 
         ORDER BY State, Zip
-        `, [avg_price, avg_rent, life_expectancy, walkability, state],
+        `, [],
         (err, data) => {
         if (err || data.length === 0) {
           console.log(err);
