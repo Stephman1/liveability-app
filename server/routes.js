@@ -15,7 +15,7 @@ connection.connect((err) => err && console.log(err));
 // Route 1: GET /search_us_zip/:zip
 const search_us_zip = async function(req, res) {
     // Return all information on a given US zip code
-    const zipcode = req.params.zip;
+    const zipcode = req.params.zip ? req.params.zip.trim() : '';
 
     connection.query(`
         WITH LifeExpectancy AS (
@@ -43,8 +43,8 @@ const search_us_zip = async function(req, res) {
 // Route 2: GET /search_uk_zip/:zip
 const search_uk_zip = async function(req, res) {
     // Return all information on a given UK post code sector (zip code equivalent)
-    const zipcode = req.params.zip.toUpperCase();
-
+    const zipcode = (req.params.zip || '').replace(/\s+/g, '').toUpperCase();
+    
     connection.query(`
         WITH LifeExpectancy AS (
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
