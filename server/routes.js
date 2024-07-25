@@ -244,7 +244,28 @@ const search_all_zips = async function(req, res) {
     );
 }
 
-// Route 6: GET /search_similar_zips/:zip
+// Route 6: GET /search_historical_property_data/:zip
+const search_historical_property_data = async function(req, res) {
+    // Return historical property data for US zip codes ordered by date.
+    const zipcode = req.params.zip;
+
+    connection.query(`
+        SELECT p.Zip AS Zip, AvgPrice, AvgRent, DATE_FORMAT(p.Date, '%m/%d/%Y') AS Date
+        FROM AvgPropertyPrices p LEFT OUTER JOIN AvgRentalPrices r ON p.Zip = r.Zip AND p.Date = r.Date
+        WHERE p.Zip = ?
+        ORDER BY Date DESC
+        `, [zipcode],
+        (err, data) => {
+        if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+        } else {
+            res.json(data);
+        }}
+    ); 
+}
+
+// Route 7: GET /search_similar_zips/:zip
 const search_similar_zips = async function(req, res) {
     // Return all zip codes that are similar to the zip code input by the user ordered by state and zip code (ascending).
     // POSSIBLE API CALL. MAY OR MAY NOT BE NEEDED.
@@ -256,4 +277,5 @@ module.exports = {
     search_us_zips,
     search_uk_zips,
     search_all_zips,
+    search_historical_property_data,
 }
