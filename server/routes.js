@@ -12,282 +12,227 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
-/******************
- * WARM UP ROUTES *
- ******************/
-
-// Route 1: GET /author/:type
-const author = async function(req, res) {
-  // TODO (TASK 1): replace the values of name and pennKey with your own
-  const name = 'Stephen Keeler';
-  const pennKey = 'keelers';
-
-  // checks the value of type the request parameters
-  // note that parameters are required and are specified in server.js in the endpoint by a colon (e.g. /author/:type)
-  if (req.params.type === 'name') {
-    // res.send returns data back to the requester via an HTTP response
-    res.send(`Created by ${name}`);
-  } else if (req.params.type === 'pennkey') {
-    // TODO (TASK 2): edit the else if condition to check if the request parameter is 'pennkey' and if so, send back response 'Created by [pennkey]'
-    res.send(`Created by ${pennKey}`);
-  } else {
-    // we can also send back an HTTP status code to indicate an improper request
-    res.status(400).send(`'${req.params.type}' is not a valid author type. Valid types are 'name' and 'pennkey'.`);
-  }
-}
-
-// Route 2: GET /random
-const random = async function(req, res) {
-  // you can use a ternary operator to check the value of request query values
-  // which can be particularly useful for setting the default value of queries
-  // note if users do not provide a value for the query it will be undefined, which is falsey
-  const explicit = req.query.explicit === 'true' ? 1 : 0;
-
-  // Here is a complete example of how to query the database in JavaScript.
-  // Only a small change (unrelated to querying) is required for TASK 3 in this route.
-  connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE explicit <= ${explicit}
-    ORDER BY RAND()
-    LIMIT 1
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      // If there is an error for some reason, or if the query is empty (this should not be possible)
-      // print the error message and return an empty object instead
-      console.log(err);
-      // Be cognizant of the fact we return an empty object {}. For future routes, depending on the
-      // return type you may need to return an empty array [] instead.
-      res.json({});
-    } else {
-      // Here, we return results of the query as an object, keeping only relevant data
-      // being song_id and title which you will add. In this case, there is only one song
-      // so we just directly access the first element of the query results array (data)
-      // TODO (TASK 3): also return the song title in the response
-      res.json({
-        song_id: data[0].song_id,
-        title: data[0].title,
-      });
-    }
-  });
-}
-
-/********************************
- * BASIC SONG/ALBUM INFO ROUTES *
- ********************************/
-
-// Route 3: GET /song/:song_id
-const song = async function(req, res) {
-  // TODO (TASK 4): implement a route that given a song_id, returns all information about the song
-  // Hint: unlike route 2, you can directly SELECT * and just return data[0]
-  // Most of the code is already written for you, you just need to fill in the query
-  const songId = req.params.song_id;
-
-  connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE song_id = ?
-    `, [songId], 
-    (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data[0]);
-    }
-  });
-}
-
-// Route 4: GET /album/:album_id
-const album = async function(req, res) {
-  // TODO (TASK 5): implement a route that given a album_id, returns all information about the album
-  const albumId = req.params.album_id;
-
-  connection.query(`
-    SELECT *
-    FROM Albums
-    WHERE album_id = ?
-    `, [albumId],
-    (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data[0]);
-    }
-  });
-}
-
-// Route 5: GET /albums
-const albums = async function(req, res) {
-  // TODO (TASK 6): implement a route that returns all albums ordered by release date (descending)
-  // Note that in this case you will need to return multiple albums, so you will need to return an array of objects
-  connection.query(`
-    SELECT *
-    FROM Albums
-    ORDER BY release_date DESC
-    `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json([]);
-    } else {
-      res.json(data);
-    }
-  });
-}
-
-// Route 6: GET /album_songs/:album_id
-const album_songs = async function(req, res) {
-  // TODO (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
-  const albumId = req.params.album_id;
-
-  connection.query(`
-    SELECT song_id, title, number, duration, plays
-    FROM Songs
-    WHERE album_id = ?
-    ORDER BY number
-    `, [albumId],
-    (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json([]);
-    } else {
-      res.json(data);
-    }
-  });
-}
-
-/************************
- * ADVANCED INFO ROUTES *
- ************************/
-
-// Route 7: GET /top_songs
-const top_songs = async function(req, res) {
-  const page = req.query.page;
-  // TODO (TASK 8): use the ternary (or nullish) operator to set the pageSize based on the query or default to 10
-  const pageSize = req.query.page_size ?? 10;
-
-  if (!page) {
-    // TODO (TASK 9)): query the database and return all songs ordered by number of plays (descending)
-    // Hint: you will need to use a JOIN to get the album title as well
-    connection.query(`
-      SELECT s.song_id, s.title, s.album_id, a.title AS album, s.plays
-      FROM Albums a JOIN Songs s ON a.album_id = s.album_id
-      ORDER BY s.plays DESC
-      `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json([]);
-      } else {
-        res.json(data);
-      }
-    });
-  } else {
-    // TODO (TASK 10): reimplement TASK 9 with pagination
-    // Hint: use LIMIT and OFFSET (see https://www.w3schools.com/php/php_mysql_select_limit.asp)
-    const offset = (page - 1) * pageSize;
+// Route 1: GET /search_us_zip/:zip
+const search_us_zip = async function(req, res) {
+    // Return all information on a given US zip code
+    const zipcode = req.params.zip;
 
     connection.query(`
-      SELECT s.song_id, s.title, s.album_id, a.title AS album, s.plays
-      FROM Albums a JOIN Songs s ON a.album_id = s.album_id
-      ORDER BY s.plays DESC
-      LIMIT ?, ?
-      `, [Number(offset), Number(pageSize)],
-      (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json([]);
-      } else {
-        res.json(data);
-      }
-    });
-  }
+        WITH LifeExpectancy AS (
+            SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+            FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            WHERE Zip = ?
+            GROUP BY Zip
+        )
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
+        LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+        WHERE p.Zip = ?
+        `, [zipcode, zipcode], 
+        (err, data) => {
+        if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+        } else {
+            res.json(data[0]);
+        }}
+    );
 }
 
-// Route 8: GET /top_albums
-const top_albums = async function(req, res) {
-  // TODO (TASK 11): return the top albums ordered by aggregate number of plays of all songs on the album (descending), with optional pagination (as in route 7)
-  // Hint: you will need to use a JOIN and aggregation to get the total plays of songs in an album
-  const page = req.query.page;
-  const pageSize = req.query.page_size ?? 10;
-
-  if (!page) {
-    connection.query(`
-      SELECT a.album_id, a.title, SUM(s.plays) AS plays
-      FROM Albums a JOIN Songs s ON a.album_id = s.album_id
-      GROUP BY a.album_id, a.title
-      ORDER BY SUM(s.plays) DESC
-      `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json([]);
-      } else {
-        res.json(data);
-      }
-    });
-  } else {
-    const offset = (page - 1) * pageSize;
+// Route 2: GET /search_uk_zip/:zip
+const search_uk_zip = async function(req, res) {
+    // Return all information on a given UK post code sector (zip code equivalent)
+    const zipcode = req.params.zip.toUpperCase();
 
     connection.query(`
-      SELECT a.album_id, a.title, SUM(s.plays) AS plays
-      FROM Albums a JOIN Songs s ON a.album_id = s.album_id
-      GROUP BY a.album_id, a.title
-      ORDER BY SUM(s.plays) DESC
-      LIMIT ?, ?
-      `, [Number(offset), Number(pageSize)],
-      (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json([]);
-      } else {
-        res.json(data);
-      }
-    });
-  } 
+        WITH LifeExpectancy AS (
+            SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+            FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+            WHERE Sector = ?
+        )
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
+        FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
+        WHERE p.Sector = ?
+        `, [zipcode, zipcode], 
+        (err, data) => {
+        if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+        } else {
+            res.json(data[0]);
+        }}
+    );
 }
 
-// Route 9: GET /search_albums
-const search_songs = async function(req, res) {
-  // TODO (TASK 12): return all songs that match the given search query with parameters defaulted to those specified in API spec ordered by title (ascending)
-  // Some default parameters have been provided for you, but you will need to fill in the rest
-  const title = req.query.title ? `%${req.query.title}%`: '%';
-  const durationLow = Number(req.query.duration_low ?? 60);
-  const durationHigh = Number(req.query.duration_high ?? 660);
-  const playsLow = Number(req.query.plays_low ?? 0);
-  const playsHigh = Number(req.query.plays_high ?? 1100000000);
-  const danceabilityLow = Number(req.query.danceability_low ?? 0);
-  const danceabilityHigh = Number(req.query.danceability_high ?? 1);
-  const energyLow = Number(req.query.energy_low ?? 0);
-  const energyHigh = Number(req.query.energy_high ?? 1);
-  const valenceLow = Number(req.query.valence_low ?? 0);
-  const valenceHigh = Number(req.query.valence_high ?? 1);
-  const explicit = req.query.explicit === 'true' ? 1 : 0;
+// Route 3: GET /search_us_zips
+const search_us_zips = async function(req, res) {
+    // Return all US zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code (ascending)
+    const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+    const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+    const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+    const walkability = req.query.walkability ? Number(req.query.walkability): null;
+    const state = req.query.state ? `${req.query.state}`: null;
 
-  connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE title LIKE ? AND duration >= ? AND duration <= ? AND plays >= ? AND plays <= ? AND danceability >= ? AND danceability <= ? AND energy >= ? AND energy <= ? 
-    AND valence >= ? AND valence <= ? AND explicit <= ?
-    ORDER BY title
-    `, [title, durationLow, durationHigh, playsLow, playsHigh, danceabilityLow, danceabilityHigh, energyLow, energyHigh, valenceLow, valenceHigh, explicit],
-    (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json([]);
-    } else {
-      res.json(data);
+    let us_where_clauses = [];
+
+    if (avg_price !== null) {
+        us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
     }
-  });
+
+    if (avg_rent !== null) {
+        us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+    }
+
+    if (life_expectancy !== null) {
+        us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+    }
+
+    if (walkability !== null) {
+        us_where_clauses.push(`NatWalkInd IS NOT NULL AND NatWalkInd > ${walkability}`);
+    }
+
+    if (state !== null) {
+        us_where_clauses.push(`State IS NOT NULL AND State = '${state}'`);
+    }
+
+    let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
+
+    connection.query(`
+        WITH LifeExpectancy AS (
+            SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+            FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            GROUP BY Zip
+        )
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, LifeExpectancy, NatWalkInd AS Walkability
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
+        LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+        ${us_where_clause} 
+        ORDER BY State, Zip
+        `, [],
+        (err, data) => {
+        if (err || data.length === 0) {
+          console.log(err);
+          res.json([]);
+        } else {
+          res.json(data);
+        }}
+    );
+}
+
+// Route 4: GET /search_uk_zips
+const search_uk_zips = async function(req, res) {
+    // Return all UK postcode sectors (zip code equivalent) that match the given search query with parameters defaulted to those specified in API spec ordered by 
+    // local area (state equivalent) and postcode sector (ascending)
+    const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+    const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+    const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+    const state = req.query.state ? `${req.query.state}`: null;
+
+    let uk_where_clauses = [];
+
+    if (avg_price !== null) {
+        uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
+    }
+
+    if (avg_rent !== null) {
+        uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
+    }
+
+    if (life_expectancy !== null) {
+        uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+    }
+
+    if (state !== null) {
+        uk_where_clauses.push(`LocalArea IS NOT NULL AND LocalArea LIKE '%${state}%'`);
+    }
+
+    let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
+
+    connection.query(`
+        WITH LifeExpectancy AS (
+            SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+            FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+        )
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, SocialRent
+        FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
+        ${uk_where_clause}
+        ORDER BY State, Zip
+        `, [],
+        (err, data) => {
+        if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+        } else {
+            res.json(data);
+        }}
+    );
+}
+
+// Route 5: GET /search_all_zips
+const search_all_zips = async function(req, res) {
+    // Return all US and UK zip codes that match the given search query with parameters defaulted to those specified in API spec ordered by state and zip code 
+    // (ascending). A UK local area is considered analagous to a US state.
+    const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+    const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+    const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+
+    let us_where_clauses = [];
+    let uk_where_clauses = [];
+
+    if (avg_price !== null) {
+        us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
+        uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
+    }
+
+    if (avg_rent !== null) {
+        us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+        uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
+    }
+
+    if (life_expectancy !== null) {
+        us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+        uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+    }
+
+    let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
+    let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
+    
+    connection.query(`
+        WITH USLifeExpectancy AS (
+            SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+            FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+            GROUP BY Zip
+        ), UKLifeExpectancy AS (
+            SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+            FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+        )
+        SELECT * FROM (
+        (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, LifeExpectancy, 'US' AS Country
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip 
+        ${us_where_clause})
+        UNION ALL
+        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, LifeExpectancy, 'UK' AS Country
+        FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
+        ${uk_where_clause})) AS combinedResults
+        ORDER BY Country, State, Zip
+        `, [],
+        (err, data) => {
+        if (err || data.length === 0) {
+          console.log(err);
+          res.json([]);
+        } else {
+          res.json(data);
+        }}
+    );
 }
 
 module.exports = {
-  author,
-  random,
-  song,
-  album,
-  albums,
-  album_songs,
-  top_songs,
-  top_albums,
-  search_songs,
+    search_us_zip,
+    search_uk_zip,
+    search_us_zips,
+    search_uk_zips,
+    search_all_zips,
 }
