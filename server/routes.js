@@ -271,6 +271,81 @@ const search_similar_zips = async function(req, res) {
     // POSSIBLE API CALL. MAY OR MAY NOT BE NEEDED.
 }
 
+// Route 8: GET /average/:country/:type
+const search_average = async function(req, res) {
+    // Return the average value for a particular type of variable, e.g., life expectancy, for a specified country
+    const country = req.params.country.toUpperCase();
+    const type = req.params.type;
+    let search_type = '';
+
+    if (country == 'US') {
+        if (type == 'walkability') {
+            search_type = 'Walkability';
+        }
+        else if (type == 'property_price') {
+            search_type = 'USPropertyPrice';
+        }
+        else if (type == 'rental_price') {
+            search_type = 'USRentalPrice';
+        }
+        else if (type == 'life_expectancy') {
+            search_type = 'USLifeExpectancy';
+        }
+    }
+    else if (country == 'UK') {
+        if (type == 'sqft_price') {
+            search_type = 'AvgBlendedSqft';
+        }
+        else if (type == 'property_price') {
+            search_type = 'UKPropertyPrice';
+        }
+        else if (type == 'rental_price') {
+            search_type = 'UKRentalPrice';
+        }
+        else if (type == 'life_expectancy') {
+            search_type = 'UKLifeExpectancy';
+        }
+    }
+
+    connection.query(`
+        WITH USLifeExpectancy AS (
+            SELECT AVG(LifeExpectancy) AS AverageValue
+            FROM USLifeExpectancy
+        ), Walkability AS (
+            SELECT AVG(NatWalkInd) AS AverageValue
+            FROM USZipWalkability
+        ), USPropertyPrice AS (
+            SELECT AVG(AvgPrice) AS AverageValue
+            FROM LatestPropertyPrices
+        ), USRentalPrice AS (
+            SELECT AVG(AvgRent) AS AverageValue
+            FROM LatestRentalPrices
+        ), UKPropertyPrice AS (
+            SELECT AVG(AvgAskingPrice * 1.29) AS AverageValue
+            FROM UKProperties
+        ), UKRentalPrice AS (
+            SELECT AVG(AvgAskingRent * 1.29) AS AverageValue
+            FROM UKProperties
+        ), UKLifeExpectancy AS (
+            SELECT AVG(Combined) AS AverageValue
+            FROM UKLifeExpectancy
+        ), AvgBlendedSqft AS (
+            SELECT AVG(AvgBlendedSqftPrice * 1.29) AS AverageValue
+            FROM UKProperties
+        )
+        SELECT ROUND(AverageValue, 2) AS ?
+        FROM ${search_type}
+        `, [search_type],
+        (err, data) => {
+        if (err || data.length === 0) {
+            console.log(err);
+            res.json({});
+        } else {
+            res.json(data);
+        }}
+    );
+}
+
 module.exports = {
     search_us_zip,
     search_uk_zip,
@@ -278,4 +353,5 @@ module.exports = {
     search_uk_zips,
     search_all_zips,
     search_historical_property_data,
+    search_average,
 }

@@ -16,6 +16,7 @@ app.get('/search_us_zips', routes.search_us_zips);
 app.get('/search_us_zip/:zip', routes.search_us_zip);
 app.get('/search_uk_zip/:zip', routes.search_uk_zip);
 app.get('/search_historical_property_data/:zip', routes.search_historical_property_data);
+app.get('/search_average/:country/:type', routes.search_average);
 
 app.listen(config.server_port, () => {
   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
