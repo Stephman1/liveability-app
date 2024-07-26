@@ -264,12 +264,212 @@ const search_historical_property_data = async function(req, res) {
         }}
     ); 
 }
-
+/* Implemented but was unable to test for bugs. 
 // Route 7: GET /search_similar_zips/:zip
 const search_similar_zips = async function(req, res) {
     // Return all zip codes that are similar to the zip code input by the user ordered by state and zip code (ascending).
     // POSSIBLE API CALL. MAY OR MAY NOT BE NEEDED.
+    const zipcode = req.params.zip;
+    const regex = /[a-zA-Z]/;
+
+    // All UK zipcodes contain letters while US zipcodes only contain digits
+    if (regex.test(zipcode)){
+        const zipData = await searchUKZips(zipcode);
+        
+        const searchParams = {
+            avgPrice: zipData.AvgPrice,
+            avgRent: zipData.AvgRent,
+            lifeExpectancy: zipData.LifeExpectancy,
+        };
+    }
+    else{ // US Zipcode
+        const zipData = await searchUSZips(zipcode);
+
+        const searchParams = {
+            avgPrice: zipData.AvgPrice,
+            avgRent: zipData.AvgRent,
+            lifeExpectancy: zipData.LifeExpectancy,
+            walkability: zipData.Walkability,
+        };
+    }
+    const similarZips = await searchSimilarZips(searchParams);
+    res.json({ similarZips });
 }
+
+const searchSimilarZips = (params) => {
+    return new Promise((resolve, reject) => {
+        const { avgPrice, avgRent, lifeExpectancy, walkability, state } = params;
+
+        const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+        const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+        const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+
+        let us_where_clauses = [];
+        let uk_where_clauses = [];
+
+        if (avg_price !== null) {
+            us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
+            uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
+        }
+
+        if (avg_rent !== null) {
+            us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+            uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
+        }
+
+        if (life_expectancy !== null) {
+            us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+            uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+        }
+
+        let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
+        let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
+        
+        connection.query(`
+            WITH USLifeExpectancy AS (
+                SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+                FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+                GROUP BY Zip
+            ), UKLifeExpectancy AS (
+                SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+                FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+            )
+            SELECT * FROM (
+            (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'US' AS Country
+            FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+            LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip 
+            ${us_where_clause})
+            UNION ALL
+            (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country
+            FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
+            ${uk_where_clause})) AS combinedResults
+            ORDER BY Country, State, Zip
+            `, [],
+            (err, data) => {
+            if (err || data.length === 0) {
+            console.log(err);
+            res.json([]);
+            } else {
+            res.json(data);
+            }}
+        );
+    }
+)}
+const searchUKZips = (params) => {
+    return new Promise((resolve, reject) => {
+        const { avgPrice, avgRent, lifeExpectancy, walkability, state } = params;
+        const avg_price = req.query.avgPrice ? Number(req.query.avgPrice) : null;
+        const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
+        const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
+        const state = req.query.state ? `${req.query.state}`: null;
+        const avg_blended_sqft = req.query.avgBlendedSqft ? Number(req.query.avgBlendedSqft) : null;
+        const avg_household_income = req.query.avgHouseholdIncome ? Number(req.query.avgHouseholdIncome) : null;
+        const social_rent = req.query.socialRent ? Number(req.query.socialRent) : null;
+
+        let uk_where_clauses = [];
+
+        if (avg_price !== null) {
+            uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
+        }
+
+        if (avg_rent !== null) {
+            uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
+        }
+
+        if (life_expectancy !== null) {
+            uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+        }
+
+        if (state !== null) {
+            uk_where_clauses.push(`LocalArea IS NOT NULL AND LocalArea LIKE '%${state}%'`);
+        }
+
+        if (avg_blended_sqft !== null) {
+            uk_where_clauses.push(`AvgBlendedSqftPrice IS NOT NULL AND (AvgBlendedSqftPrice * 1.29) < ${avg_blended_sqft}`);
+        }
+
+        if (avg_household_income !== null) {
+            uk_where_clauses.push(`AvgHouseholdIncome IS NOT NULL AND (AvgHouseholdIncome * 1.29) < ${avg_household_income}`);
+        }
+
+        if (social_rent !== null) {
+            uk_where_clauses.push(`SocialRent IS NOT NULL AND SocialRent < ${social_rent}`);
+        }
+
+        let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
+
+        connection.query(`
+            WITH LifeExpectancy AS (
+                SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+                FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+            )
+            SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
+            FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
+            ${uk_where_clause}
+            ORDER BY State, Zip
+            `, [],
+            (err, data) => {
+            if (err || data.length === 0) {
+                console.log(err);
+                res.json({});
+            } else {
+                res.json(data);
+            }}
+        );
+    }
+)}
+
+const searchUSZips = (params) => {
+    return new Promise((resolve, reject) => {
+        const { avgPrice, avgRent, lifeExpectancy, walkability, state } = params;
+
+        let us_where_clauses = [];
+
+        if (avg_price !== null) {
+            us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
+        }
+
+        if (avg_rent !== null) {
+            us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+        }
+
+        if (life_expectancy !== null) {
+            us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+        }
+
+        if (walkability !== null) {
+            us_where_clauses.push(`NatWalkInd IS NOT NULL AND NatWalkInd > ${walkability}`);
+        }
+
+        if (state !== null) {
+            us_where_clauses.push(`State IS NOT NULL AND State = '${state}'`);
+        }
+
+        let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
+
+        connection.query(`
+            WITH LifeExpectancy AS (
+                SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
+                FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
+                GROUP BY Zip
+            )
+            SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability
+            FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+            LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
+            LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+            ${us_where_clause} 
+            ORDER BY State, Zip
+            `, [],
+            (err, data) => {
+            if (err || data.length === 0) {
+            console.log(err);
+            res.json([]);
+            } else {
+            res.json(data);
+            }}
+        );
+    }
+)}*/
 
 // Route 8: GET /average/:country/:type
 const search_average = async function(req, res) {
