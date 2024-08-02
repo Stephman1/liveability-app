@@ -40,6 +40,56 @@ const search_us_zip = async function(req, res) {
     );
 }
 
+// Define the AQI rating logic
+function getUKAQIRating(PM25, PM10, NO2, O3) {
+    const mySet = new Set();
+    // set as null
+    let NO2_rating=-1, PM10_rating=-1, PM25_rating=-1, O3_rating = -1;
+    // these values are ug/m^3
+    if (NO2 <= 200) {
+        NO2_rating = 'Good';
+    } else if (NO2 > 200 && NO2 <= 400) {
+        NO2_rating = 'Moderate';
+    } else {
+        NO2_rating = 'Poor';
+    }
+    if (NO2 != null) {mySet.add(NO2_rating)};
+    if (O3 <= 100) {
+        O3_rating = 'Good';
+    } else if (O3 > 100 && O3 <= 180) {
+        O3_rating = 'Moderate';
+    } else {
+        O3_rating = 'Poor';
+    }
+    if (O3 != null) { mySet.add(O3_rating)};
+    if (PM25 <= 35) {
+        PM25_rating = 'Good';
+    } else if (PM25 > 35 && PM25 <= 53) {
+        PM25_rating = 'Moderate';
+    } else {
+        PM25_rating = 'Poor';
+    }
+    if (PM25 != null) {mySet.add(PM25_rating)};
+    if (PM10 <= 50) {
+        PM10_rating = 'Good';
+    } else if (PM10 > 50 && PM10 <= 100) {
+        PM10_rating = 'Moderate';
+    } else {
+        PM10_rating = 'Poor';
+    }
+    if (PM10 != null) {mySet.add(PM10_rating)};
+    // choose worst rating as AQI rating'
+    if  (mySet.has('Poor')) {
+        return 'Poor';
+    } else if (mySet.has('Moderate')) {
+        return 'Moderate';
+    } else if (mySet.has('Good')) {
+        return 'Good';
+    } else {
+        return "NA"
+    }
+}
+
 // Route 2: GET /search_uk_zip/:zip
 const search_uk_zip = async function(req, res) {
     // Return all information on a given UK post code sector (zip code equivalent)
@@ -47,12 +97,44 @@ const search_uk_zip = async function(req, res) {
     
     connection.query(`
         WITH LifeExpectancy AS (
-            SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
-            FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
-            WHERE Sector = ?
+    SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
+    FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
+    WHERE Sector = ?
+        ), Combined AS (
+            SELECT site, year FROM UK_pm10_data
+            UNION
+            SELECT site, year FROM UK_pm25_data
+            UNION
+            SELECT site, year FROM UK_NO2_data
+            UNION
+            SELECT site, year FROM UK_O3_data
+        ), AirQualityData AS (
+            SELECT
+                Combined.site,
+                Combined.year,
+                pm10_data.Annual_Mean_PM10,
+                pm25_data.Annual_Mean_PM25,
+                no2_data.Annual_Mean_NO2,
+                o3_data.Annual_Avg_Max_Daily_O3
+            FROM Combined
+            LEFT JOIN UK_pm10_data pm10_data ON Combined.site = pm10_data.site AND Combined.year = pm10_data.year
+            LEFT JOIN UK_pm25_data pm25_data ON Combined.site = pm25_data.site AND Combined.year = pm25_data.year
+            LEFT JOIN UK_NO2_data no2_data ON Combined.site = no2_data.site AND Combined.year = no2_data.year
+            LEFT JOIN UK_O3_data o3_data ON Combined.site = o3_data.site AND Combined.year = o3_data.year
+        ), FinalAirQualityData AS (
+            SELECT A.Postcode, B.Site, year, Annual_Mean_PM10, Annual_Mean_PM25, Annual_Mean_NO2, Annual_Avg_Max_Daily_O3
+        FROM UK_Site_postcodes A
+        JOIN AirQualityData B ON A.Site = B.Site
+        WHERE Year = 2023
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent
-        FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
+        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice,
+            (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy,
+            (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome,
+            CONCAT(SocialRent, '%') AS SocialRent, f.Annual_Mean_PM25 AS PM25, f.Annual_Mean_PM10 AS PM10,
+            f.Annual_Mean_NO2 AS NO2, f.Annual_Avg_Max_Daily_O3 AS O3
+        FROM UKProperties p
+        LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
+        LEFT OUTER JOIN FinalAirQualityData f ON f.Postcode = p.Sector
         WHERE p.Sector = ?
         `, [zipcode, zipcode], 
         (err, data) => {
@@ -60,7 +142,9 @@ const search_uk_zip = async function(req, res) {
             console.log(err);
             res.json({});
         } else {
-            res.json(data[0]);
+            let result = data[0];
+            result.AQIRating = getUKAQIRating(result.PM25, result.PM10, result.NO2, result.O3);
+            res.json(result);
         }}
     );
 }
