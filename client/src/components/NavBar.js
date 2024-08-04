@@ -10,9 +10,10 @@ function NavText({ href, text, isMain }) {
       noWrap
       style={{
         marginRight: '30px',
-        fontFamily: 'monospace',
-        fontWeight: 700,
-        letterSpacing: '.3rem',
+        fontFamily: 'Roboto',
+        fontWeight: 900,
+        letterSpacing: '.2rem',
+        color: 'white'
       }}
     >
       <NavLink
@@ -36,9 +37,9 @@ export default function NavBar() {
     <AppBar position='static'>
       <Container maxWidth='xl'>
         <Toolbar disableGutters>
-          <NavText href='/' text='SWIFTIFY' isMain />
-          <NavText href='/albums' text='ALBUMS' />
-          <NavText href='/songs' text='SONGS' />
+          <NavText href='/' text='Liveability App' isMain />
+          <NavText href='/albums' text='Explore' />
+          {/*<NavText href='/songs' text='SONGS' />*/}
         </Toolbar>
       </Container>
     </AppBar>

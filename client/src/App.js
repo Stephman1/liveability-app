@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from '@mui/material'
-import { indigo, amber } from '@mui/material/colors'
+import { blue, purple, pink, green } from '@mui/material/colors'
 import { createTheme } from "@mui/material/styles";
 
 import NavBar from './components/NavBar';
@@ -14,9 +14,21 @@ import ZipCodePage from "./pages/ZipCodePage";
 // in this case, we only change the color scheme
 export const theme = createTheme({
   palette: {
-    primary: indigo,
-    secondary: amber,
+    primary: {
+      light: blue[300],
+      main: green[500],
+      dark: blue[700],
+    },
+    secondary: {
+      light: pink[300],
+      main: "#11cb5f",
+      dark: pink[700],
+    },
   },
+  shape: {
+    borderRadius: 18,
+  }, 
+  padding: 40,
 });
 
 // App is the root component of our application and as children contain all our pages
