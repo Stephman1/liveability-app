@@ -268,7 +268,6 @@ const search_historical_property_data = async function(req, res) {
 // Route 7: GET /search_similar_zips/:zip
 const search_similar_zips = async function(req, res) {
     // Return all zip codes that are similar to the zip code input by the user ordered by state and zip code (ascending).
-    // POSSIBLE API CALL. MAY OR MAY NOT BE NEEDED.
     const zipcode = req.params.zip;
     const regex = /[a-zA-Z]/;
 
