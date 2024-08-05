@@ -23,11 +23,24 @@ const search_us_zip = async function(req, res) {
             FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
             WHERE Zip = ?
             GROUP BY Zip
-        )
-        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability
-        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
+        ), US_AQI AS (SELECT State, County, Year, 90th_Percentile_AQI
+        FROM US_air_quality_2023_data), County AS (
+            SELECT County, County_code
+            FROM US_County_Codes
+        ), Zip AS (
+            SELECT Zip, CountyCode
+            FROM ZipTract
+        ), FinalAQI AS (
+        SELECT Zip, 90th_Percentile_AQI
+        FROM US_AQI
+        LEFT JOIN County ON US_AQI.County = County.County
+        LEFT JOIN Zip ON County.County_code = Zip.CountyCode
+        GROUP BY Zip)
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability, q.90th_Percentile_AQI AS AQI
+        FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+        LEFT OUTER JOIN FinalAQI q ON q.Zip = p.Zip
         WHERE p.Zip = ?
         `, [zipcode, zipcode], 
         (err, data) => {
@@ -35,10 +48,23 @@ const search_us_zip = async function(req, res) {
             console.log(err);
             res.json({});
         } else {
-            res.json(data[0]);
+            let result = data[0];
+            result.AQIRating = getUSAQIRating(result.AQI);
+            res.json(result);
         }}
     );
 }
+
+function getUSAQIRating(AQI) {
+    if (AQI <= 50) {
+        return 'Good'
+    } else if (AQI > 50 && AQI <= 100) {
+        return 'Moderate'
+    } else {
+        return 'Poor'
+    }
+}
+
 
 // Define the AQI rating logic
 function getUKAQIRating(PM25, PM10, NO2, O3) {
