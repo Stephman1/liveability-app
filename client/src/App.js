@@ -9,6 +9,7 @@ import AlbumsPage from './pages/AlbumsPage';
 import SongsPage from './pages/SongsPage';
 import AlbumInfoPage from './pages/AlbumInfoPage';
 import ZipCodePage from "./pages/ZipCodePage";
+import ComparisonPage from "./pages/ComparisonPage";
 
 // createTheme enables you to customize the look and feel of your app past the default
 // in this case, we only change the color scheme
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/albums/:album_id" element={<AlbumInfoPage />} />
           <Route path="/songs" element={<SongsPage />} />
           <Route path="/zip_code_view/:zip_code" element={<ZipCodePage />} />
+          <Route path="/comparison_view/:zip_code1/:zip_code2" element={<ComparisonPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
