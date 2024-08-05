@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, ButtonGroup, Container, Card, Chip, Typography, Stack } from '@mui/material';
+import { Box, Button, ButtonGroup, Container, Card, Chip, Typography, Stack, TextField, IconButton } from '@mui/material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LabelList, LineChart, Line, CartesianGrid, Tooltip, Legend, } from 'recharts';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import SearchIcon from '@mui/icons-material/Search';
 
 const config = require('../config.json');
 
 export default function ZipCodePage() {
     const { zip_code } = useParams();
+    const navigate = useNavigate();
 
     const [zipData, setZipData] = useState({});
     const [avgNatHousingPrice, setAvgNatPrice] = useState('');
@@ -19,6 +21,7 @@ export default function ZipCodePage() {
     const [housingChartType, setHousingChartType] = useState('Price');
     const [lifeWalkChartType, setLifeWalkChartType] = useState('Life');
     const [country, setCountry] = useState("");
+    const [newZipCode, setNewZipCode] = useState("");
 
     useEffect(() => {
         const regex = /[a-zA-Z]/;
@@ -75,6 +78,14 @@ export default function ZipCodePage() {
         }
     }, [zip_code]);
 
+    const handleInputChange = (event) => {
+        setNewZipCode(event.target.value);
+    };
+
+    const handleSearch = () => {
+        navigate(`/zip_code_view/${newZipCode}`);
+    };
+
     const housingPriceData = [
         { name: 'Zip Code Property Price', value: zipData.AvgPrice },
         { name: 'Average National Property Price', value: avgNatHousingPrice },
@@ -92,12 +103,12 @@ export default function ZipCodePage() {
     
     const walkabilityData = [
         { name: 'Zip Code Walkability', value: zipData.Walkability },
-        { name: 'Average National Walkability', value: avgWalkability },
+        { name: 'Average US Walkability', value: avgWalkability },
       ];
 
     const sqftPriceData = [
         { name: 'Zip Code Housing Sqft Price', value: zipData.AverageBlended$SqftPrice },
-        { name: 'Average National Sqft Price', value: avgSqftPrice },
+        { name: 'Average UK Sqft Price', value: avgSqftPrice },
       ];
 
     let historicalHousingPricesData = [];
@@ -129,6 +140,17 @@ export default function ZipCodePage() {
                 <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
           Zip code chosen:
         </Typography>
+        <TextField
+            value={newZipCode}
+            onChange={handleInputChange}
+            placeholder="Enter zip code"
+            size="small"
+            variant="outlined"
+            style={{ marginRight: 10 }}
+        />
+        <IconButton onClick={handleSearch} color="primary">
+            <SearchIcon />
+        </IconButton>
         <Typography gutterBottom variant="h5" component="div">
           <Chip color="primary" label={country} size="large" />
           
@@ -147,7 +169,7 @@ export default function ZipCodePage() {
         <Typography variant="body"> 
         <p>{zip_code} is a zip code in {zipData.State}, an area in the {country}.</p>
         <p>Avg Housing Price: ${zipData.AvgPrice} &emsp;&emsp; Avg Rent: ${zipData.AvgRent} &emsp;&emsp; Life Expectancy: {zipData.LifeExpectancy} years</p>
-        <p>Walkability: {zipData.Walkability} &emsp;&emsp; Air Quality: {zipData.AQIRating} &emsp;&emsp; Social Rent: {zipData.SocialRent} &emsp;&emsp; Avg Household Income: ${zipData.AvgHouseholdIncome} &emsp;&emsp; Avg Housing Sqft Price: ${zipData.AverageBlended$SqftPrice}</p>
+        <p>Walkability: {zipData.Walkability} &emsp;&emsp; Air Quality: <b>{zipData.AQIRating}</b> &emsp;&emsp; Social Rent: {zipData.SocialRent} &emsp;&emsp; Avg Household Income: ${zipData.AvgHouseholdIncome} &emsp;&emsp; Avg Housing Sqft Price: ${zipData.AverageBlended$SqftPrice}</p>
         </Typography>
         </Card>
         
@@ -158,7 +180,7 @@ export default function ZipCodePage() {
                     <Button disabled={housingChartType === 'Rent'} onClick={() => handleHousingGraphChange('Rent')}>Rent</Button>
                 </ButtonGroup>
                 <div style={{ margin: 20 }}>
-                    { // This ternary statement returns a BarChart if barRadar is true, and a RadarChart otherwise
+                    {
                     (housingChartType === 'Price')
                         ? (
                             <ResponsiveContainer height={250}>
@@ -250,8 +272,8 @@ export default function ZipCodePage() {
                     </BarChart>
                 </ResponsiveContainer>
                 </div>
-
                 
+
 
                 <Button >Historical Housing Prices</Button>
                 <div style={{ margin: 20 }}></div>
