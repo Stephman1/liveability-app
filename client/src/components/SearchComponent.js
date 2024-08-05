@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button, Checkbox, Container, FormControlLabel, Grid, Link, Slider, TextField, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import { NavLink } from 'react-router-dom';
 
 import SongCard from '../components/SongCard';
 import { formatDuration } from '../helpers/formatter';
@@ -51,9 +52,9 @@ export default function SearchComponent() {
   // LazyTable component. The big difference is we provide all data to the DataGrid component
   // instead of loading only the data we need (which is necessary in order to be able to sort by column)
   const columns = [
-    { field: 'Zip', headerName: 'Zip', width: 90, renderCell: (params) => (
-        <Link onClick={() => setSelectedSongId(params.row.Zip)}>{params.value}</Link>
-    ) },
+    { field: 'Zip', headerName: 'Zip', width: 90, renderCell: (params) => 
+      <NavLink to={`/zip_code_view/${params.row.Zip}`}>{params.row.Zip}</NavLink>
+     },
     { field: 'State', headerName: 'State or Geo',  width: 300 },
     { field: 'Country', headerName: 'Country',  width: 100 },
     { field: 'LifeExpectancy', headerName: 'Life Expectancy (Years)',  width: 200 },

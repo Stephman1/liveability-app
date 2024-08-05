@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, ButtonGroup, Container } from '@mui/material';
+import { Box, Button, ButtonGroup, Container, Card, Chip, Typography, Stack, Divider } from '@mui/material';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { useParams } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ export default function ZipCodePage() {
     const [zipData, setZipData] = useState({});
 
     const [barRadar, setBarRadar] = useState(true);
+    const [country, setCountry] = useState("")
 
     useEffect(() => {
         const regex = /[a-zA-Z]/;
@@ -18,6 +19,7 @@ export default function ZipCodePage() {
         // All UK zipcodes contain letters while US zipcodes only contain digits
         if (regex.test(zip_code)) {
             try { 
+                setCountry("United Kingdom")
                 fetch(`http://${config.server_host}:${config.server_port}/search_uk_zip/${zip_code}`)
                 .then(res => res.json())
                 .then(resJson => setZipData(resJson));
@@ -28,6 +30,7 @@ export default function ZipCodePage() {
         }
         else { // US Zipcode
             try { 
+                setCountry("United States of America")
                 fetch(`http://${config.server_host}:${config.server_port}/search_us_zip/${zip_code}`)
                 .then(res => res.json())
                 .then(resJson => setZipData(resJson));
@@ -51,13 +54,42 @@ export default function ZipCodePage() {
     return (
         <Container>
             <Box
-                p={3}
-                style={{ background: 'white', borderRadius: '16px', border: '2px solid #000', width: 600 }}
+                p={3} m={2}
+                style={{ background: '#e5f2fb', borderRadius: '16px', border: '0px solid #000', width: 600 }}
             >
-                <h1>{zip_code}</h1>
-                <p>Walkability: {zipData.Walkability}</p>
-                <p>Air Quality: {zipData.AQIRating}</p>
-                <p>State: {zipData.State}</p>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+          Zip code chosen:
+        </Typography>
+        <Typography gutterBottom variant="h5" component="div">
+          <Chip color="primary" label={country} size="large" />
+          
+          </Typography>
+        </Stack>
+          <Typography gutterBottom variant="h2" component="div">
+          <b>{zip_code}</b>
+          </Typography>
+          
+          
+        
+        <Typography sx={{ mb: 1.5 }} color="text.secondary">
+        Area: <Chip color="secondary" label={zipData.State} size="small" />
+        </Typography>
+        <Card variant="outlined" sx={{p:2, m:1}}>
+        <Typography variant="body"> 
+        <p>{zip_code} is a zip code in {zipData.State}, an area in the {country}.</p>
+        <p>Walkability: {zipData.Walkability}</p>
+        <p>Air Quality: {zipData.AQIRating}</p>
+        <p>State: {zipData.State}</p>
+        </Typography>
+        </Card>
+        
+        
+         
+                
+                
+                
+
                 <ButtonGroup>
                     <Button disabled={barRadar} onClick={handleGraphChange}>Bar</Button>
                     <Button disabled={!barRadar} onClick={handleGraphChange}>Radar</Button>

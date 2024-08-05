@@ -38,7 +38,7 @@ export default function NavBar() {
       <Container maxWidth='xl'>
         <Toolbar disableGutters>
           <NavText href='/' text='Liveability App' isMain />
-          <NavText href='/albums' text='Explore' />
+          <NavText href="/zip_code_view/:zip_code" text='Zip Code' />
           {/*<NavText href='/songs' text='SONGS' />*/}
         </Toolbar>
       </Container>

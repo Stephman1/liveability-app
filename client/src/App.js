@@ -16,12 +16,12 @@ export const theme = createTheme({
   palette: {
     primary: {
       light: blue[300],
-      main: green[500],
+      main: '#134B70',//green[500],
       dark: blue[700],
     },
     secondary: {
       light: pink[300],
-      main: "#11cb5f",
+      main: "#00c5d8",
       dark: pink[700],
     },
   },
