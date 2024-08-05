@@ -11,7 +11,7 @@ export default function ZipCodePage() {
     const [zipData, setZipData] = useState({});
 
     const [barRadar, setBarRadar] = useState(true);
-    const [country, setCountry] = useState("")
+    const [country, setCountry] = useState("");
 
     useEffect(() => {
         const regex = /[a-zA-Z]/;
@@ -55,7 +55,7 @@ export default function ZipCodePage() {
         <Container>
             <Box
                 p={3} m={2}
-                style={{ background: '#e5f2fb', borderRadius: '16px', border: '0px solid #000', width: 600 }}
+                style={{ background: '#e5f2fb', borderRadius: '16px', border: '0px solid #000', width: 1100 }}
             >
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
@@ -78,9 +78,9 @@ export default function ZipCodePage() {
         <Card variant="outlined" sx={{p:2, m:1}}>
         <Typography variant="body"> 
         <p>{zip_code} is a zip code in {zipData.State}, an area in the {country}.</p>
-        <p>Walkability: {zipData.Walkability}</p>
-        <p>Air Quality: {zipData.AQIRating}</p>
-        <p>State: {zipData.State}</p>
+        <p>Avg Housing Price: ${zipData.AvgPrice} &emsp;&emsp; Avg Rent: ${zipData.AvgRent} &emsp;&emsp; Life Expectancy: {zipData.LifeExpectancy} years</p>
+        <p>Walkability: {zipData.Walkability} &emsp;&emsp; Air Quality: {zipData.AQIRating} &emsp;&emsp; Social Rent: {zipData.SocialRent}</p>
+        <p>Avg Household Income: ${zipData.AvgHouseholdIncome}</p>
         </Typography>
         </Card>
         
