@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, ButtonGroup, Container, Card, Chip, Typography, Stack, Divider } from '@mui/material';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LabelList } from 'recharts';
 import { useParams } from 'react-router-dom';
 
 const config = require('../config.json');
@@ -31,6 +31,9 @@ export default function ZipCodePage() {
                 fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/property_price`)
                 .then(res => res.json())
                 .then(resJson => setAvgNatPrice(resJson.UKPropertyPrice));
+                fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/rental_price`)
+                .then(res => res.json())
+                .then(resJson => setAvgNatRent(resJson.UKRentalPrice));
             }
             catch(err) {
                 console.log(err);
@@ -45,6 +48,9 @@ export default function ZipCodePage() {
                 fetch(`http://${config.server_host}:${config.server_port}/search_average/us/property_price`)
                 .then(res => res.json())
                 .then(resJson => setAvgNatPrice(resJson.USPropertyPrice));
+                fetch(`http://${config.server_host}:${config.server_port}/search_average/us/rental_price`)
+                .then(res => res.json())
+                .then(resJson => setAvgNatRent(resJson.USRentalPrice));
             }
             catch(err) {
                 console.log(err);
@@ -55,6 +61,11 @@ export default function ZipCodePage() {
     const housingPriceData = [
         { name: 'Zip Code Property Price', value: zipData.AvgPrice },
         { name: 'Average Country Property Price', value: avgNatHousingPrice },
+      ];
+
+    const rentalPriceData = [
+        { name: 'Zip Code Rent', value: zipData.AvgRent },
+        { name: 'Average Country Rent', value: avgNatRentalPrice },
       ];
 
     const handleHousingGraphChange = (type) => {
@@ -109,19 +120,26 @@ export default function ZipCodePage() {
                                     layout='vertical'
                                     margin={{ left: 40 }}
                                 >
-                                    <XAxis type='number' domain={[0, 2000000]} />
+                                    <XAxis type='number' domain={[0, 9000000]} />
                                     <YAxis type='category' dataKey='name' />
-                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' />
+                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                                        <LabelList dataKey='value' position='right' />
+                                    </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <ResponsiveContainer height={250}>
-                                <RadarChart outerRadius={90} width={730} height={250} data={housingPriceData}>
-                                    <PolarGrid />
-                                    <PolarAngleAxis dataKey='name' />
-                                    <PolarRadiusAxis angle={30} domain={[0, 2000000]} />
-                                    <Radar name="category" dataKey="value" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                                </RadarChart>
+                                <BarChart
+                                    data={rentalPriceData}
+                                    layout='vertical'
+                                    margin={{ left: 40 }}
+                                >
+                                    <XAxis type='number' domain={[0, 90000]} />
+                                    <YAxis type='category' dataKey='name' />
+                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                                        <LabelList dataKey='value' position='right' />
+                                    </Bar>
+                                </BarChart>
                             </ResponsiveContainer>
                         )
                     }
