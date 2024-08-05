@@ -447,7 +447,7 @@ const searchUSZip = (zipcode) => {
     }
 )}
 
-// Route 8: GET /average/:country/:type
+// Route 8: GET /search_average/:country/:type
 const search_average = async function(req, res) {
     // Return the average value for a particular type of variable, e.g., life expectancy, for a specified country
     const country = req.params.country.toUpperCase();
@@ -517,7 +517,7 @@ const search_average = async function(req, res) {
             console.log(err);
             res.json({});
         } else {
-            res.json(data);
+            res.json(data[0]);
         }}
     );
 }
