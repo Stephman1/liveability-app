@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, ButtonGroup, Container, Card, Chip, Typography, Stack } from '@mui/material';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LabelList, Label } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LabelList, LineChart, Line, CartesianGrid, Tooltip, Legend, } from 'recharts';
 import { useParams } from 'react-router-dom';
 
 const config = require('../config.json');
@@ -14,6 +14,7 @@ export default function ZipCodePage() {
     const [avgNatLifeExpectancy, setAvgNatLifeExpectancy] = useState('');
     const [avgWalkability, setWalkability] = useState('');
     const [avgSqftPrice, setSqftPrice] = useState('');
+    const [historicalHousing, setHistoricalHousing] = useState([]);
 
     const [housingChartType, setHousingChartType] = useState('Price');
     const [lifeWalkChartType, setLifeWalkChartType] = useState('Life');
@@ -64,6 +65,9 @@ export default function ZipCodePage() {
                 fetch(`http://${config.server_host}:${config.server_port}/search_average/us/walkability`)
                 .then(res => res.json())
                 .then(resJson => setWalkability(resJson.Walkability));
+                fetch(`http://${config.server_host}:${config.server_port}/search_historical_property_data/${zip_code}`)
+                .then(res => res.json())
+                .then(resJson => setHistoricalHousing(resJson));
             }
             catch(err) {
                 console.log(err);
@@ -95,6 +99,17 @@ export default function ZipCodePage() {
         { name: 'Zip Code Housing Sqft Price', value: zipData.AverageBlended$SqftPrice },
         { name: 'Average National Sqft Price', value: avgSqftPrice },
       ];
+
+    let historicalHousingPricesData = [];
+    let historicalRentalPricesData = [];
+
+    for (let i = 0; i < historicalHousing.length; i++) {
+        historicalHousingPricesData.push({Date: historicalHousing[i].Date, HousingPrice: historicalHousing[i].AvgPrice });
+    };
+
+    for (let i = 0; i < historicalHousing.length; i++) {
+        historicalRentalPricesData.push({Date: historicalHousing[i].Date, Rent: historicalHousing[i].AvgRent });
+    };
 
     const handleHousingGraphChange = (type) => {
         setHousingChartType(type);
@@ -235,6 +250,36 @@ export default function ZipCodePage() {
                     </BarChart>
                 </ResponsiveContainer>
                 </div>
+
+                
+
+                <Button >Historical Housing Prices</Button>
+                <div style={{ margin: 20 }}></div>
+                <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={historicalHousingPricesData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="Date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="HousingPrice" stroke="#82ca9d" />
+                    </LineChart>
+                </ResponsiveContainer>
+
+
+
+                <Button >Historical Rental Prices</Button>
+                <div style={{ margin: 20 }}></div>
+                <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={historicalRentalPricesData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="Date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="Rent" stroke="#8884d8" />
+                    </LineChart>
+                </ResponsiveContainer>
             </Box>
         </Container>
     );
