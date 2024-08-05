@@ -15,7 +15,7 @@ export default function ZipCodePage() {
     const [avgWalkability, setWalkability] = useState('');
     const [avgSqftPrice, setSqftPrice] = useState('');
 
-    const [barRadar, setBarRadar] = useState(true);
+    const [housingChartType, setHousingChartType] = useState('Price');
     const [country, setCountry] = useState("");
 
     useEffect(() => {
@@ -57,8 +57,8 @@ export default function ZipCodePage() {
         { name: 'Average Country Property Price', value: avgNatHousingPrice },
       ];
 
-    const handleGraphChange = () => {
-        setBarRadar(!barRadar);
+    const handleHousingGraphChange = (type) => {
+        setHousingChartType(type);
       };
 
     return (
@@ -96,12 +96,12 @@ export default function ZipCodePage() {
 
 
                 <ButtonGroup>
-                    <Button disabled={barRadar} onClick={handleGraphChange}>Bar</Button>
-                    <Button disabled={!barRadar} onClick={handleGraphChange}>Radar</Button>
+                    <Button disabled={housingChartType === 'Price'} onClick={() => handleHousingGraphChange('Price')}>Housing Price</Button>
+                    <Button disabled={housingChartType === 'Rent'} onClick={() => handleHousingGraphChange('Rent')}>Rent</Button>
                 </ButtonGroup>
                 <div style={{ margin: 20 }}>
                     { // This ternary statement returns a BarChart if barRadar is true, and a RadarChart otherwise
-                    barRadar
+                    (housingChartType === 'Price')
                         ? (
                             <ResponsiveContainer height={250}>
                                 <BarChart
