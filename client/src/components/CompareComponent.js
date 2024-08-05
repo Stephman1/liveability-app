@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { Button, Checkbox, Container, FormControlLabel, Grid, Link, Slider, TextField, MenuItem, Select, InputLabel, FormControl, Divider, Autocomplete } from '@mui/material';
 
 import { formatDuration } from '../helpers/formatter';
@@ -64,9 +65,13 @@ export default function CompareComponent() {
          <h5>{zip2.label ? zip2.label: ""}</h5>
         </Grid>
         <Grid item xs={4}>
-        <Button  style={{ }}>
+        <NavLink to={`/comparison_view/${zip1.label? zip1.label : ""}/${zip2.label? zip2.label : ""}`}>
+        <Button  variant="contained" style={{ }}>
         Compare
       </Button>
+        </NavLink>
+
+
 
         </Grid>
 </Grid>
