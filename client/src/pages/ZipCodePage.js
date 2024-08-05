@@ -9,6 +9,11 @@ export default function ZipCodePage() {
     const { zip_code } = useParams();
 
     const [zipData, setZipData] = useState({});
+    const [avgNatHousingPrice, setAvgNatPrice] = useState('');
+    const [avgNatRentalPrice, setAvgNatRent] = useState('');
+    const [avgNatLifeExpectancy, setAvgNatLifeExpectancy] = useState('');
+    const [avgWalkability, setWalkability] = useState('');
+    const [avgSqftPrice, setSqftPrice] = useState('');
 
     const [barRadar, setBarRadar] = useState(true);
     const [country, setCountry] = useState("");
@@ -23,6 +28,9 @@ export default function ZipCodePage() {
                 fetch(`http://${config.server_host}:${config.server_port}/search_uk_zip/${zip_code}`)
                 .then(res => res.json())
                 .then(resJson => setZipData(resJson));
+                fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/property_price`)
+                .then(res => res.json())
+                .then(resJson => setAvgNatPrice(resJson.UKPropertyPrice));
             }
             catch(err) {
                 console.log(err);
@@ -34,6 +42,9 @@ export default function ZipCodePage() {
                 fetch(`http://${config.server_host}:${config.server_port}/search_us_zip/${zip_code}`)
                 .then(res => res.json())
                 .then(resJson => setZipData(resJson));
+                fetch(`http://${config.server_host}:${config.server_port}/search_average/us/property_price`)
+                .then(res => res.json())
+                .then(resJson => setAvgNatPrice(resJson.USPropertyPrice));
             }
             catch(err) {
                 console.log(err);
@@ -41,10 +52,9 @@ export default function ZipCodePage() {
         }
     }, [zip_code]);
 
-    const chartData = [
-        { name: 'Average Property Price', value: zipData.AvgPrice },
-        { name: 'Average Rental Price', value: zipData.AvgRent },
-        { name: 'Life Expectancy', value: zipData.LifeExpectancy },
+    const housingPriceData = [
+        { name: 'Zip Code Property Price', value: zipData.AvgPrice },
+        { name: 'Average Country Property Price', value: avgNatHousingPrice },
       ];
 
     const handleGraphChange = () => {
@@ -79,16 +89,11 @@ export default function ZipCodePage() {
         <Typography variant="body"> 
         <p>{zip_code} is a zip code in {zipData.State}, an area in the {country}.</p>
         <p>Avg Housing Price: ${zipData.AvgPrice} &emsp;&emsp; Avg Rent: ${zipData.AvgRent} &emsp;&emsp; Life Expectancy: {zipData.LifeExpectancy} years</p>
-        <p>Walkability: {zipData.Walkability} &emsp;&emsp; Air Quality: {zipData.AQIRating} &emsp;&emsp; Social Rent: {zipData.SocialRent}</p>
-        <p>Avg Household Income: ${zipData.AvgHouseholdIncome}</p>
+        <p>Walkability: {zipData.Walkability} &emsp;&emsp; Air Quality: {zipData.AQIRating} &emsp;&emsp; Social Rent: {zipData.SocialRent} &emsp;&emsp; Avg Household Income: ${zipData.AvgHouseholdIncome}</p>
         </Typography>
         </Card>
         
-        
-         
-                
-                
-                
+
 
                 <ButtonGroup>
                     <Button disabled={barRadar} onClick={handleGraphChange}>Bar</Button>
@@ -100,21 +105,21 @@ export default function ZipCodePage() {
                         ? (
                             <ResponsiveContainer height={250}>
                                 <BarChart
-                                    data={chartData}
+                                    data={housingPriceData}
                                     layout='vertical'
                                     margin={{ left: 40 }}
                                 >
-                                    <XAxis type='number' domain={[0, 1000000]} />
+                                    <XAxis type='number' domain={[0, 2000000]} />
                                     <YAxis type='category' dataKey='name' />
                                     <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' />
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
                             <ResponsiveContainer height={250}>
-                                <RadarChart outerRadius={90} width={730} height={250} data={chartData}>
+                                <RadarChart outerRadius={90} width={730} height={250} data={housingPriceData}>
                                     <PolarGrid />
                                     <PolarAngleAxis dataKey='name' />
-                                    <PolarRadiusAxis angle={30} domain={[0, 1000000]} />
+                                    <PolarRadiusAxis angle={30} domain={[0, 2000000]} />
                                     <Radar name="category" dataKey="value" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
                                 </RadarChart>
                             </ResponsiveContainer>
