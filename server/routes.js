@@ -104,7 +104,7 @@ const search_us_zips = async function(req, res) {
     }
 
     if (AQIRating !== null) {
-        us_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
+        us_where_clauses.push(`AQI_Rating IS NOT NULL AND AQI_Rating = '${AQIRating}'`);
     }
 
     if (life_expectancy !== null) {
@@ -199,7 +199,7 @@ const search_uk_zips = async function(req, res) {
             SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
             FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
         )
-        SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent, AQIRating
+        SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AS AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent, AQIRating
         FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
         LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
         ${uk_where_clause}
@@ -243,7 +243,7 @@ const search_all_zips = async function(req, res) {
     }
 
     if (AQIRating !== null) {
-        us_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
+        us_where_clauses.push(`AQI_Rating IS NOT NULL AND AQI_Rating = '${AQIRating}'`);
         uk_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
     }
 
@@ -267,7 +267,7 @@ const search_all_zips = async function(req, res) {
         LEFT OUTER JOIN MaterializedUSAirQuality q ON q.Zip = p.Zip
         ${us_where_clause})
         UNION ALL
-        (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating
+        (SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating
         FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
         LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
         ${uk_where_clause})) AS combinedResults
@@ -359,7 +359,7 @@ const searchSimilarZips = (params) => {
         let uk_where_clauses = [];
 
         if (AQIRating !== null) {
-            us_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
+            us_where_clauses.push(`AQI_Rating IS NOT NULL AND AQI_Rating = '${AQIRating}'`);
             uk_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
         }
 
@@ -398,7 +398,7 @@ const searchSimilarZips = (params) => {
             LEFT OUTER JOIN MaterializedUSAirQuality q ON q.Zip = p.Zip
             ${us_where_clause})
             UNION ALL
-            (SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating
+            (SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating
             FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
             LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
             ${uk_where_clause})) AS combinedResults
@@ -445,7 +445,7 @@ const searchUKZip = (zipcode) => {
                 FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
                 WHERE Sector = ?
             )
-            SELECT p.Sector AS Zip, LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent, AQIRating
+            SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, (AvgBlendedSqftPrice * 1.29) AS AverageBlended$SqftPrice, (AvgHouseholdIncome * 1.29) AvgHouseholdIncome, CONCAT(SocialRent, '%') AS SocialRent, AQIRating
             FROM UKProperties p LEFT OUTER JOIN LifeExpectancy e ON p.Sector = e.Sector
             LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
             WHERE p.Sector = ?
