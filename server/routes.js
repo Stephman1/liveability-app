@@ -55,6 +55,7 @@ const search_us_zip = async function(req, res) {
     );
 }
 
+// gets AQI rating for US air quality data
 function getUSAQIRating(AQI) {
     if (AQI <= 50) {
         return 'Good'
@@ -214,6 +215,7 @@ const search_us_zips = async function(req, res) {
     const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
     const walkability = req.query.walkability ? Number(req.query.walkability): null;
     const state = req.query.state ? `${req.query.state}`: null;
+    const AQI = req.query.AQI ? Number(req.query.AQI) : null;
 
     let us_where_clauses = [];
 
@@ -223,6 +225,10 @@ const search_us_zips = async function(req, res) {
 
     if (avg_rent !== null) {
         us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
+    }
+
+    if (AQI !== null) {
+        us_where_clauses.push(`AQI IS NOT NULL AND AQI < ${AQI}`);
     }
 
     if (life_expectancy !== null) {
@@ -244,11 +250,24 @@ const search_us_zips = async function(req, res) {
             SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
             FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
             GROUP BY Zip
-        )
-        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability
+        ), US_AQI AS (SELECT State, County, Year, 90th_Percentile_AQI
+        FROM US_air_quality_2023_data), County AS (
+            SELECT County, County_code
+            FROM US_County_Codes
+        ), Zip AS (
+            SELECT Zip, CountyCode
+            FROM ZipTract
+        ), FinalAQI AS (
+        SELECT Zip, 90th_Percentile_AQI
+        FROM US_AQI
+        LEFT JOIN County ON US_AQI.County = County.County
+        LEFT JOIN Zip ON County.County_code = Zip.CountyCode
+        GROUP BY Zip)
+        SELECT p.Zip AS Zip, State, City, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, ROUND(NatWalkInd, 2) AS Walkability, q.90th_Percentile_AQI AS AQI
         FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
         LEFT OUTER JOIN LifeExpectancy l ON l.Zip = p.Zip
         LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
+        LEFT OUTER JOIN FinalAQI q ON q.Zip = p.Zip
         ${us_where_clause} 
         ORDER BY State, Zip
         `, [],
