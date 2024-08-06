@@ -4,6 +4,7 @@ import { ResponsiveContainer, Bar, XAxis, YAxis, RadarChart, Radar, PolarGrid, P
 import { useParams } from 'react-router-dom';
 import ZipCodeCard from '../components/ZipCodeCard'; // Import the new component
 import { BarChart } from '@mui/x-charts/BarChart';
+import CompareComponent from '../components/CompareComponent';
 
 
 const config = require('../config.json');
@@ -83,6 +84,7 @@ export default function ZipCodePage() {
 
     return (
         <Container>
+            <CompareComponent />;
            <Stack direction="row" justifyContent="space-between" alignItems="center">
            <ZipCodeCard
         zipCode={zip_code1}
