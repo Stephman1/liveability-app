@@ -11,7 +11,7 @@ export default function CompareComponent() {
   const [zip1, setZip1] = useState("");
   const [zip2, setZip2] = useState("");
 
-  const [data, setData] = useState(null);
+  const [data, setData] = useState([]);
 //data.map(x => console.log(x.Zip))
 //console.log(data)
   useEffect(() => {
