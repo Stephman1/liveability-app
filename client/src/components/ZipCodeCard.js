@@ -7,6 +7,7 @@ function ZipCodeCard({ zipCode, country, zipData }) {
   // Check if AQIRating is available or not
   const aqiRating = zipData.AQIRating === 'NA' || zipData.AQIRating == null ? 'NA' : zipData.AQIRating;
   const walkability = zipData.Walkability === 'NA' || zipData.Walkability == null ? 'NA' : zipData.Walkability;
+  const sqftPrice = zipData.AverageBlended$SqftPrice === 'NA' || zipData.AverageBlended$SqftPrice == null ? 'NA': zipData.AverageBlended$SqftPrice; 
 
   return (
     <Box p={3} m={2} style={{ background: '#e5f2fb', borderRadius: '16px', border: '0px solid #000', width: 600 }}>
@@ -33,7 +34,7 @@ function ZipCodeCard({ zipCode, country, zipData }) {
         <p>{zipCode} is a zip code in {zipData.State}, an area in the {country}.</p>
         <p>Walkability: {walkability}</p>
         <p>Air Quality: {aqiRating}</p>
-        <p>State: {zipData.State}</p>
+        <p>Housing Sqft Price: ${sqftPrice}</p>
         </Typography>
         </Card>
     </Box>
