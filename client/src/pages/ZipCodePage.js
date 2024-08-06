@@ -47,6 +47,9 @@ export default function ZipCodePage() {
                     setAvgNatRent(avgNatRent.UKRentalPrice);
                     setAvgNatLifeExpectancy(avgNatLifeExpectancy.UKLifeExpectancy);
                     setSqftPrice(sqftPrice.AvgBlendedSqft);
+
+                    // Reset unused data to default value
+                    setWalkability('');
                 } else {
                     // US zipcode
                     setCountry("United States of America");
@@ -64,6 +67,9 @@ export default function ZipCodePage() {
                     setAvgNatLifeExpectancy(avgNatLifeExpectancy.USLifeExpectancy);
                     setWalkability(walkability.Walkability);
                     setHistoricalHousing(historicalHousing);
+
+                    // Reset unused data to default value
+                    setSqftPrice('');
                 }
             } catch (err) {
                 console.log(err);
