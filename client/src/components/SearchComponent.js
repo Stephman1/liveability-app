@@ -14,9 +14,9 @@ export default function SearchComponent() {
   const [zip, setZip] = useState('');
   const [country, setCountry] = useState('UK');
   const [state, setState] = useState('');
-  const [life_exp, setLifeExp] = useState(70);
-  const [avg_price, setAvgPrice] = useState(500000);
-  const [avg_rent, setAvgRent] = useState(3000);
+  const [life_exp, setLifeExp] = useState(null);
+  const [avg_price, setAvgPrice] = useState(null);
+  const [avg_rent, setAvgRent] = useState(null);
 
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/search_all_zips`)

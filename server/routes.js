@@ -231,17 +231,17 @@ const search_all_zips = async function(req, res) {
     let uk_where_clauses = [];
     let geo_where_clauses = [];
 
-    if (avg_price !== null) {
+    if (avg_price !== null && typeof avg_price === 'number' && avg_price > 0) {
         us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
         uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
     }
 
-    if (avg_rent !== null) {
+    if (avg_rent !== null && typeof avg_rent === 'number' && avg_rent > 0) {
         us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
         uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
     }
 
-    if (life_expectancy !== null) {
+    if (life_expectancy !== null && typeof life_expectancy === 'number' && life_expectancy > 0) {
         us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
         uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
     }
