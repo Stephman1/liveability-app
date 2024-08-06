@@ -15,14 +15,14 @@ export default function SearchComponent() {
   const [country, setCountry] = useState('UK');
   const [state, setState] = useState('');
   const [life_exp, setLifeExp] = useState(70);
-  const [avg_price, setAvgPrice] = useState(150000);
-  const [avg_rent, setAvgRent] = useState(1000);
+  const [avg_price, setAvgPrice] = useState(500000);
+  const [avg_rent, setAvgRent] = useState(3000);
 
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/search_all_zips`)
       .then(res => res.json())
       .then(resJson => {
-        const zipsWithId = resJson.map((song) => ({ id: song.Zip, ...song }));
+        const zipsWithId = resJson.map((zip) => ({ id: zip.Zip, ...zip }));
         setData(zipsWithId);
       });
   }, []);
@@ -32,7 +32,8 @@ export default function SearchComponent() {
       `&state=${state}` +
       `&lifeExpectancy=${life_exp}` +
       `&avgPrice=${avg_price}` +
-      `&avgRent=${avg_rent}` 
+      `&avgRent=${avg_rent}` +
+      `&country=${country}`
     )
       .then(res => res.json())
       .then(resJson => {
@@ -69,8 +70,11 @@ export default function SearchComponent() {
     <Container>
       <h2>Search Areas</h2>
       <Grid container spacing={6}>
-        <Grid item xs={8}>
-          <TextField label='Title' value={zip} onChange={(e) => setZip(e.target.value)} style={{ width: "100%" }}/>
+        <Grid item xs={4}>
+          <TextField label='Zip Code' value={zip} onChange={(e) => setZip(e.target.value)} style={{ width: "100%" }}/>
+        </Grid>
+        <Grid item xs={4}>
+          <TextField label='State' value={state} onChange={(e) => setState(e.target.value)} style={{ width: "100%" }}/>
         </Grid>
         <Grid item xs={4}>
           <FormControl fullWidth>
@@ -92,8 +96,8 @@ export default function SearchComponent() {
           <p>Life Expectancy</p>
           <Slider
             value={life_exp}
-            min={30}
-            max={80}
+            min={55}
+            max={90}
             step={1}
             onChange={(e, newValue) => setLifeExp(newValue)}
             valueLabelDisplay='auto'
@@ -126,7 +130,6 @@ export default function SearchComponent() {
         Search
       </Button>
       <h2>Results</h2>
-      {/* Notice how similar the DataGrid component is to our LazyTable! What are the differences? */}
       <DataGrid
         rows={data}
         columns={columns}
