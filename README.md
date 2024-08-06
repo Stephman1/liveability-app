@@ -64,19 +64,18 @@ This will download and save the required dependencies into the node_modules fold
 
 Step 1.
 
-First, you should start the server application by running the command 
+First, you should start the server application by running the below commands in a terminal window:
 ```
 cd server
 npm start
 ``` 
-in a terminal window. This application (server.js) runs on the host ‘localhost’ and port 8080 
-as specified using the configuration file (config.json).
+This application (server.js) runs on the host ‘localhost’ and port 8080 as specified using the 
+configuration file (config.json).
 
 Step 2.
 
-This application, by default, runs on localhost - port 3000. Once you run the below command,
-your default browser should open up a window to localhost:3000 (you might need to wait a few
-seconds for it to load).
+This application, by default, runs on localhost - port 3000. Once you run the below commands,
+your default browser should open up a window to localhost:3000:
 ```
 cd client
 npm start
