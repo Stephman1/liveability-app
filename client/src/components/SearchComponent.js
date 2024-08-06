@@ -116,8 +116,8 @@ export default function SearchComponent() {
           <p>Housing Price</p>
           <Slider
             value={avg_price}
-            min={10000}
-            max={10000000}
+            min={25000}
+            max={9000000}
             step={10000}
             onChange={(e, newValue) => setAvgPrice(newValue)}
             valueLabelDisplay='auto'
@@ -127,8 +127,8 @@ export default function SearchComponent() {
           <p>Rental Price</p>
           <Slider
             value={avg_rent}
-            min={100}
-            max={10000}
+            min={650}
+            max={85000}
             step={100}
             onChange={(e, newValue) => setAvgRent(newValue)}
             valueLabelDisplay='auto'
