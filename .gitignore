@@ -134,6 +134,3 @@ dist
 
 # Data
 /data/
-
-# Authentication
-/server/config.json
