@@ -12,7 +12,7 @@ export default function SearchComponent() {
   const [data, setData] = useState([]);
 
   const [zip, setZip] = useState('');
-  const [country, setCountry] = useState('UK');
+  const [country, setCountry] = useState('Both');
   const [state, setState] = useState('');
   const [life_exp, setLifeExp] = useState(null);
   const [avg_price, setAvgPrice] = useState(null);
@@ -42,6 +42,15 @@ export default function SearchComponent() {
         const zipsWithId = resJson.map((zip) => ({ id: zip.Zip, ...zip }));
         setData(zipsWithId);
       });
+  }
+
+  const reset = () => {
+    setAvgPrice(null);
+    setAvgRent(null);
+    setLifeExp(null);
+    setCountry('Both');
+    setZip('');
+    setState('');
   }
 
   // This defines the columns of the table of songs used by the DataGrid component.
@@ -126,9 +135,14 @@ export default function SearchComponent() {
           />
         </Grid>
       </Grid>
-      <Button onClick={() => search() } style={{ left: '50%', transform: 'translateX(-50%)' }}>
-        Search
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+        <Button onClick={() => search()} style={{ transform: 'translateX(-50%)' }}>
+          Search
+        </Button>
+        <Button onClick={() => reset()} style={{ transform: 'translateX(-50%)' }}>
+          Reset
+        </Button>
+      </div>
       <h2>Results</h2>
       <DataGrid
         rows={data}
