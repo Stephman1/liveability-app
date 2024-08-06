@@ -22,6 +22,8 @@ export default function ZipCodePage() {
     const [lifeWalkChartType, setLifeWalkChartType] = useState('Life');
     const [country, setCountry] = useState("");
     const [newZipCode, setNewZipCode] = useState("");
+    const zipUndefined = zip_code === "undefined" || !zip_code;
+
 
     useEffect(() => {
         const regex = /[a-zA-Z]/;
@@ -126,28 +128,44 @@ export default function ZipCodePage() {
     const handleLifeWalkGraphChange = (type) => {
         setLifeWalkChartType(type);
     }
+    
+        
+        
 
     return (
+        <>
+        <Container>
+            <Box
+                p={3} m={2}
+                style={{ background: 'white', borderRadius: '16px', border: '1px solid grey', width: 1100 }}
+            >
+                <Stack direction="row" alignItems="left" spacing={2}>
+                <Typography variant="h6" color="text.primary" gutterBottom>
+        Zip code chosen:
+      </Typography>
+      <TextField
+          value={newZipCode}
+          onChange={handleInputChange}
+          placeholder="Enter zip code"
+          size="small"
+          variant="outlined"
+          style={{ marginRight: 10 }}
+      />
+      <IconButton onClick={handleSearch} color="primary">
+          <SearchIcon />
+      </IconButton>
+
+                </Stack>
+       </Box>
+       </Container>
+       {!zipUndefined && (
         <Container>
             <Box
                 p={3} m={2}
                 style={{ background: '#e5f2fb', borderRadius: '16px', border: '0px solid #000', width: 1100 }}
             >
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-          Zip code chosen:
-        </Typography>
-        <TextField
-            value={newZipCode}
-            onChange={handleInputChange}
-            placeholder="Enter zip code"
-            size="small"
-            variant="outlined"
-            style={{ marginRight: 10 }}
-        />
-        <IconButton onClick={handleSearch} color="primary">
-            <SearchIcon />
-        </IconButton>
+
         <Typography gutterBottom variant="h5" component="div">
           <Chip color="primary" label={country} size="large" />
           
@@ -300,6 +318,7 @@ export default function ZipCodePage() {
                     </LineChart>
                 </ResponsiveContainer>
             </Box>
-        </Container>
+        </Container>)}
+        </>
     );
 }
