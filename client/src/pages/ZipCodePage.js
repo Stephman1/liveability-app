@@ -28,10 +28,6 @@ export default function ZipCodePage() {
 
         const fetchData = async () => {
             try {
-                // Need to reset data back to default values
-                setZipData({});
-                setHistoricalHousing([]);
-
                 if (regex.test(zip_code)) {
                     // UK zipcode
                     setCountry("United Kingdom");
@@ -50,6 +46,7 @@ export default function ZipCodePage() {
 
                     // Reset unused data to default value
                     setWalkability('');
+                    setHistoricalHousing([]);
                 } else {
                     // US zipcode
                     setCountry("United States of America");
