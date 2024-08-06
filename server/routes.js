@@ -223,21 +223,25 @@ const search_all_zips = async function(req, res) {
     const avg_rent = req.query.avgRent ? Number(req.query.avgRent) : null;
     const life_expectancy = req.query.lifeExpectancy ? Number(req.query.lifeExpectancy) : null;
     const AQIRating = req.query.AQIRating ? `${req.query.AQIRating}` : null;
+    const state = req.query.state ? `${req.query.state}`: null;
+    const country = req.query.country ? `${req.query.country}`: null;
+    const zip = req.query.zip ? `${req.query.zip}`: null;
 
     let us_where_clauses = [];
     let uk_where_clauses = [];
+    let geo_where_clauses = [];
 
-    if (avg_price !== null) {
+    if (avg_price !== null && typeof avg_price === 'number' && avg_price > 0) {
         us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
         uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
     }
 
-    if (avg_rent !== null) {
+    if (avg_rent !== null && typeof avg_rent === 'number' && avg_rent > 0) {
         us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
         uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
     }
 
-    if (life_expectancy !== null) {
+    if (life_expectancy !== null && typeof life_expectancy === 'number' && life_expectancy > 0) {
         us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
         uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
     }
@@ -247,8 +251,27 @@ const search_all_zips = async function(req, res) {
         uk_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
     }
 
+    if (state !== null) {
+        let formatted_state = state.trim();
+        if (formatted_state !== '') {
+            geo_where_clauses.push(`State IS NOT NULL AND State LIKE '%${formatted_state}%'`);
+        }
+    }
+
+    if (country !== null && country !== 'Both') {
+        geo_where_clauses.push(`Country IS NOT NULL AND Country = '${country}'`);
+    }
+
+    if (zip !== null) {
+        let formatted_zip = zip.trim();
+        if (formatted_zip !== '') {
+            geo_where_clauses.push(`Zip IS NOT NULL AND Zip LIKE '%${formatted_zip}%'`);
+        }
+    }
+
     let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
     let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
+    let geo_where_clause = geo_where_clauses.length > 0 ? 'WHERE ' + geo_where_clauses.join(' AND ') : '';
     
     connection.query(`
         WITH USLifeExpectancy AS (
@@ -271,6 +294,7 @@ const search_all_zips = async function(req, res) {
         FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
         LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
         ${uk_where_clause})) AS combinedResults
+        ${geo_where_clause}
         ORDER BY Country, State, Zip
         `, [],
         (err, data) => {

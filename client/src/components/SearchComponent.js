@@ -3,9 +3,6 @@ import { Button, Checkbox, Container, FormControlLabel, Grid, Link, Slider, Text
 import { DataGrid } from '@mui/x-data-grid';
 import { NavLink } from 'react-router-dom';
 
-import SongCard from '../components/SongCard';
-import { formatDuration } from '../helpers/formatter';
-
 
 import { SelectChangeEvent } from '@mui/material/Select';
 const config = require('../config.json');
@@ -13,20 +10,19 @@ const config = require('../config.json');
 export default function SearchComponent() {
   const [pageSize, setPageSize] = useState(10);
   const [data, setData] = useState([]);
-  const [selectedSongId, setSelectedSongId] = useState(null);
 
   const [zip, setZip] = useState('');
-  const [country, setCountry] = useState('UK');
+  const [country, setCountry] = useState('Both');
   const [state, setState] = useState('');
-  const [life_exp, setLifeExp] = useState(70);
-  const [avg_price, setAvgPrice] = useState(150000);
-  const [avg_rent, setAvgRent] = useState(1000);
+  const [life_exp, setLifeExp] = useState(null);
+  const [avg_price, setAvgPrice] = useState(null);
+  const [avg_rent, setAvgRent] = useState(null);
 
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/search_all_zips`)
       .then(res => res.json())
       .then(resJson => {
-        const zipsWithId = resJson.map((song) => ({ id: song.Zip, ...song }));
+        const zipsWithId = resJson.map((zip) => ({ id: zip.Zip, ...zip }));
         setData(zipsWithId);
       });
   }, []);
@@ -36,7 +32,8 @@ export default function SearchComponent() {
       `&state=${state}` +
       `&lifeExpectancy=${life_exp}` +
       `&avgPrice=${avg_price}` +
-      `&avgRent=${avg_rent}` 
+      `&avgRent=${avg_rent}` +
+      `&country=${country}`
     )
       .then(res => res.json())
       .then(resJson => {
@@ -45,6 +42,15 @@ export default function SearchComponent() {
         const zipsWithId = resJson.map((zip) => ({ id: zip.Zip, ...zip }));
         setData(zipsWithId);
       });
+  }
+
+  const reset = () => {
+    setAvgPrice(null);
+    setAvgRent(null);
+    setLifeExp(null);
+    setCountry('Both');
+    setZip('');
+    setState('');
   }
 
   // This defines the columns of the table of songs used by the DataGrid component.
@@ -71,11 +77,13 @@ export default function SearchComponent() {
   // will automatically lay out all the grid items into rows based on their xs values.
   return (
     <Container>
-      {selectedSongId && <SongCard songId={selectedSongId} handleClose={() => setSelectedSongId(null)} />}
       <h2>Search Areas</h2>
       <Grid container spacing={6}>
-        <Grid item xs={8}>
-          <TextField label='Title' value={zip} onChange={(e) => setZip(e.target.value)} style={{ width: "100%" }}/>
+        <Grid item xs={4}>
+          <TextField label='Zip Code' value={zip} onChange={(e) => setZip(e.target.value)} style={{ width: "100%" }}/>
+        </Grid>
+        <Grid item xs={4}>
+          <TextField label='State' value={state} onChange={(e) => setState(e.target.value)} style={{ width: "100%" }}/>
         </Grid>
         <Grid item xs={4}>
           <FormControl fullWidth>
@@ -93,15 +101,12 @@ export default function SearchComponent() {
             </Select>
 </FormControl>
         </Grid>
-
-        {/* TODO (TASK 24): add sliders for danceability, energy, and valence (they should be all in the same row of the Grid) */}
-        {/* Hint: consider what value xs should be to make them fit on the same row. Set max, min, and a reasonable step. Is valueLabelFormat necessary? */}
         <Grid item xs={4}>
           <p>Life Expectancy</p>
           <Slider
             value={life_exp}
-            min={30}
-            max={80}
+            min={55}
+            max={90}
             step={1}
             onChange={(e, newValue) => setLifeExp(newValue)}
             valueLabelDisplay='auto'
@@ -111,8 +116,8 @@ export default function SearchComponent() {
           <p>Housing Price</p>
           <Slider
             value={avg_price}
-            min={10000}
-            max={10000000}
+            min={25000}
+            max={9000000}
             step={10000}
             onChange={(e, newValue) => setAvgPrice(newValue)}
             valueLabelDisplay='auto'
@@ -122,19 +127,23 @@ export default function SearchComponent() {
           <p>Rental Price</p>
           <Slider
             value={avg_rent}
-            min={100}
-            max={10000}
+            min={650}
+            max={85000}
             step={100}
             onChange={(e, newValue) => setAvgRent(newValue)}
             valueLabelDisplay='auto'
           />
         </Grid>
       </Grid>
-      <Button onClick={() => search() } style={{ left: '50%', transform: 'translateX(-50%)' }}>
-        Search
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
+        <Button onClick={() => search()} style={{ transform: 'translateX(-50%)' }}>
+          Search
+        </Button>
+        <Button onClick={() => reset()} style={{ transform: 'translateX(-50%)' }}>
+          Reset
+        </Button>
+      </div>
       <h2>Results</h2>
-      {/* Notice how similar the DataGrid component is to our LazyTable! What are the differences? */}
       <DataGrid
         rows={data}
         columns={columns}
