@@ -26,56 +26,46 @@ export default function ZipCodePage() {
     useEffect(() => {
         const regex = /[a-zA-Z]/;
 
-        // All UK zipcodes contain letters while US zipcodes only contain digits
-        if (regex.test(zip_code)) {
-            try { 
-                setCountry("United Kingdom")
-                fetch(`http://${config.server_host}:${config.server_port}/search_uk_zip/${zip_code}`)
-                .then(res => res.json())
-                .then(resJson => setZipData(resJson));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/property_price`)
-                .then(res => res.json())
-                .then(resJson => setAvgNatPrice(resJson.UKPropertyPrice));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/rental_price`)
-                .then(res => res.json())
-                .then(resJson => setAvgNatRent(resJson.UKRentalPrice));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/life_expectancy`)
-                .then(res => res.json())
-                .then(resJson => setAvgNatLifeExpectancy(resJson.UKLifeExpectancy));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/sqft_price`)
-                .then(res => res.json())
-                .then(resJson => setSqftPrice(resJson.AvgBlendedSqft));
-            }
-            catch(err) {
+        const fetchData = async () => {
+            try {
+                if (regex.test(zip_code)) {
+                    // UK zipcode
+                    setCountry("United Kingdom");
+                    const [zipData, avgNatPrice, avgNatRent, avgNatLifeExpectancy, sqftPrice] = await Promise.all([
+                        fetch(`http://${config.server_host}:${config.server_port}/search_uk_zip/${zip_code}`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/property_price`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/rental_price`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/life_expectancy`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/uk/sqft_price`).then(res => res.json())
+                    ]);
+                    setZipData(zipData);
+                    setAvgNatPrice(avgNatPrice.UKPropertyPrice);
+                    setAvgNatRent(avgNatRent.UKRentalPrice);
+                    setAvgNatLifeExpectancy(avgNatLifeExpectancy.UKLifeExpectancy);
+                    setSqftPrice(sqftPrice.AvgBlendedSqft);
+                } else {
+                    // US zipcode
+                    setCountry("United States of America");
+                    const [zipData, avgNatPrice, avgNatRent, avgNatLifeExpectancy, walkability, historicalHousing] = await Promise.all([
+                        fetch(`http://${config.server_host}:${config.server_port}/search_us_zip/${zip_code}`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/us/property_price`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/us/rental_price`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/us/life_expectancy`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_average/us/walkability`).then(res => res.json()),
+                        fetch(`http://${config.server_host}:${config.server_port}/search_historical_property_data/${zip_code}`).then(res => res.json())
+                    ]);
+                    setZipData(zipData);
+                    setAvgNatPrice(avgNatPrice.USPropertyPrice);
+                    setAvgNatRent(avgNatRent.USRentalPrice);
+                    setAvgNatLifeExpectancy(avgNatLifeExpectancy.USLifeExpectancy);
+                    setWalkability(walkability.Walkability);
+                    setHistoricalHousing(historicalHousing);
+                }
+            } catch (err) {
                 console.log(err);
             }
-        }
-        else { // US Zipcode
-            try { 
-                setCountry("United States of America")
-                fetch(`http://${config.server_host}:${config.server_port}/search_us_zip/${zip_code}`)
-                .then(res => res.json())
-                .then(resJson => setZipData(resJson));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/us/property_price`)
-                .then(res => res.json())
-                .then(resJson => setAvgNatPrice(resJson.USPropertyPrice));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/us/rental_price`)
-                .then(res => res.json())
-                .then(resJson => setAvgNatRent(resJson.USRentalPrice));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/us/life_expectancy`)
-                .then(res => res.json())
-                .then(resJson => setAvgNatLifeExpectancy(resJson.USLifeExpectancy));
-                fetch(`http://${config.server_host}:${config.server_port}/search_average/us/walkability`)
-                .then(res => res.json())
-                .then(resJson => setWalkability(resJson.Walkability));
-                fetch(`http://${config.server_host}:${config.server_port}/search_historical_property_data/${zip_code}`)
-                .then(res => res.json())
-                .then(resJson => setHistoricalHousing(resJson));
-            }
-            catch(err) {
-                console.log(err);
-            }
-        }
+        };
+        fetchData();
     }, [zip_code]);
 
     const handleInputChange = (event) => {
