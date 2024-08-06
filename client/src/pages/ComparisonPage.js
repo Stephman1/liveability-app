@@ -81,6 +81,21 @@ export default function ZipCodePage() {
     const handleGraphChange = () => {
         setBarRadar1(!barRadar1);
       };
+    
+    // Check if both zip codes are 'undefined' or empty
+    const zip1Undefined = zip_code1 === "undefined" || !zip_code1;
+    const zip2Undefined = zip_code2 === "undefined" || !zip_code2;
+
+    if (zip1Undefined && zip2Undefined) {
+        return <CompareComponent />;
+    }
+
+    // Check if both zipData1 and zipData2 are loaded
+    const hasData = zipData1 && zipData2;
+
+    if (!hasData) {
+        return <CompareComponent />;
+    }
 
     return (
         <Container>
