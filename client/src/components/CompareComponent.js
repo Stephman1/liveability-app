@@ -65,7 +65,7 @@ export default function CompareComponent() {
          <h5>{zip2.label ? zip2.label: ""}</h5>
         </Grid>
         <Grid item xs={4}>
-        <NavLink to={`/comparison_view/${zip1.label? zip1.label : ""}/${zip2.label? zip2.label : ""}`}>
+        <NavLink to={`/comparison_view/${zip1.label}/${zip2.label}`}>
         <Button  variant="contained" style={{ }}>
         Compare
       </Button>
