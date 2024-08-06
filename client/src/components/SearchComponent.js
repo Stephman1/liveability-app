@@ -3,9 +3,6 @@ import { Button, Checkbox, Container, FormControlLabel, Grid, Link, Slider, Text
 import { DataGrid } from '@mui/x-data-grid';
 import { NavLink } from 'react-router-dom';
 
-import SongCard from '../components/SongCard';
-import { formatDuration } from '../helpers/formatter';
-
 
 import { SelectChangeEvent } from '@mui/material/Select';
 const config = require('../config.json');
@@ -13,7 +10,6 @@ const config = require('../config.json');
 export default function SearchComponent() {
   const [pageSize, setPageSize] = useState(10);
   const [data, setData] = useState([]);
-  const [selectedSongId, setSelectedSongId] = useState(null);
 
   const [zip, setZip] = useState('');
   const [country, setCountry] = useState('UK');
@@ -71,7 +67,6 @@ export default function SearchComponent() {
   // will automatically lay out all the grid items into rows based on their xs values.
   return (
     <Container>
-      {selectedSongId && <SongCard songId={selectedSongId} handleClose={() => setSelectedSongId(null)} />}
       <h2>Search Areas</h2>
       <Grid container spacing={6}>
         <Grid item xs={8}>
@@ -93,9 +88,6 @@ export default function SearchComponent() {
             </Select>
 </FormControl>
         </Grid>
-
-        {/* TODO (TASK 24): add sliders for danceability, energy, and valence (they should be all in the same row of the Grid) */}
-        {/* Hint: consider what value xs should be to make them fit on the same row. Set max, min, and a reasonable step. Is valueLabelFormat necessary? */}
         <Grid item xs={4}>
           <p>Life Expectancy</p>
           <Slider
