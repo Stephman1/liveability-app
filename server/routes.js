@@ -259,57 +259,37 @@ const searchSimilarZips = (params) => {
         const walkability = params.walkability ? Number(params.walkability)-1.5 : null;
 
 
-        let us_where_clauses = [];
-        let uk_where_clauses = [];
+        let where_clauses = []
 
         if (AQIRating !== null) {
-            us_where_clauses.push(`AQI_Rating IS NOT NULL AND AQI_Rating = '${AQIRating}'`);
-            uk_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
+            where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
         }
 
         if (avg_price !== null) {
-            us_where_clauses.push(`AvgPrice IS NOT NULL AND AvgPrice < ${avg_price}`);
-            uk_where_clauses.push(`AvgAskingPrice IS NOT NULL AND (AvgAskingPrice * 1.29) < ${avg_price}`);
+            where_clauses.push(`AvgPrice IS NOT NULL`);
+            where_clauses.push(`((Country='US' AND AvgPrice < ${avg_price}) OR (Country='UK' AND (AvgPrice * 1.29) < ${avg_price}))`);
         }
 
         if (avg_rent !== null) {
-            us_where_clauses.push(`AvgRent IS NOT NULL AND AvgRent < ${avg_rent}`);
-            uk_where_clauses.push(`AvgAskingRent IS NOT NULL AND (AvgAskingRent * 1.29) < ${avg_rent}`);
+            where_clauses.push(`AvgRent IS NOT NULL`);
+            where_clauses.push(`((Country='US' AND AvgRent < ${avg_rent}) OR (Country='UK' AND (AvgRent * 1.29) < ${avg_rent}))`);
         }
 
         if (life_expectancy !== null) {
-            us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
-            uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
+            where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
         }
         if (walkability !== null) {
-            us_where_clauses.push(`NatWalkInd IS NOT NULL AND NatWalkInd > ${walkability}`);
+            where_clauses.push(`(Country='UK' OR Walkability > ${walkability})`);
         }
 
-        let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
-        let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
+        let where_clause = where_clauses.length > 0 ? 'WHERE ' + where_clauses.join(' AND ') : '';
         
         connection.query(`
-            WITH USLifeExpectancy AS (
-                SELECT Zip, AVG(LifeExpectancy) AS LifeExpectancy, ZipState AS State, ZipCity AS City
-                FROM ZipTract z LEFT OUTER JOIN USLifeExpectancy u ON z.CensusTract = u.CensusTract
-                GROUP BY Zip
-            ), UKLifeExpectancy AS (
-                SELECT Sector, Combined AS LifeExpectancy, l.LocalArea AS LocalArea
-                FROM UKAreasLookUp a LEFT OUTER JOIN UKLifeExpectancy l ON l.LocalArea = a.LocalArea
-            )
-            SELECT * FROM (
-            (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'US' AS Country,
-            AQI_Rating AS AQIRating, NatWalkInd AS Walkability
-            FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
-            LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip
-            LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
-            LEFT OUTER JOIN MaterializedUSAirQuality q ON q.Zip = p.Zip
-            ${us_where_clause})
-            UNION ALL
-            (SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating, 'NA' as Walkability
-            FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
-            LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
-            ${uk_where_clause})) AS combinedResults
+            SELECT Zip
+            FROM SimilarSearchCombined
+            ${where_clause}
+            ORDER BY RAND()
+            LIMIT 3
             `, [],
             (err, data) => {
             if (err) {
@@ -320,24 +300,7 @@ const searchSimilarZips = (params) => {
                 reject(new Error("No data found for specified parameters"))
             }
             else {
-                if (data.length > 3){ // trim down results by selecting random 20 zip codes
-                    similarZips = []
-                    indices = new Set();
-                    for (let i=0; i < 3; i++){
-                        while(true){
-                            randInd = Math.floor(Math.random()*data.length)
-                            if (!indices.has(randInd)){
-                                indices.add(randInd)
-                                similarZips.push(data[randInd]);
-                                break;
-                            }
-                        }
-                    }
-                    resolve(similarZips)
-                }
-                else{
-                    resolve(data);
-                }
+                resolve(data);
             }}
         );
     }
