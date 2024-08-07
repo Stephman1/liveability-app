@@ -122,30 +122,16 @@ export default function ExploreSimilarPage() {
                         </IconButton>
                 </Stack>
             </Box>
-
-           <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <ZipCodeCard
-                    zipCode={zipData1.Zip}
-                    country={country1}
-                    zipData={zipData1}
-                />
-
-                <ZipCodeCard
-                    zipCode={zipData2.Zip}
-                    country={country2}
-                    zipData={zipData2}
-                />
-                <ZipCodeCard
-                    zipCode={zipData3.Zip}
-                    country={country3}
-                    zipData={zipData3}
-                />
-                <ZipCodeCard
-                    zipCode={zipData4.Zip}
-                    country={country4}
-                    zipData={zipData4}
-                />
-           </Stack>
+            <div style={{ display: 'flex', overflowX: 'auto' }}>
+                {[zipData1, zipData2, zipData3, zipData4].map((zipData, index) => (
+                    <ZipCodeCard
+                    key={index}
+                    zipCode={zipData.Zip}
+                    country={zipData.country}
+                    zipData={zipData}
+                    />
+                ))}
+            </div>
            <Box p={2} m={2} style={{ background: '#e5f2fb', borderRadius: '16px', border: '0px solid #000', width: 1100 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <BarChart
