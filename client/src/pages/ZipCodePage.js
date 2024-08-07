@@ -265,7 +265,7 @@ export default function ZipCodePage() {
                                     layout='vertical'
                                     margin={{ left: 40 }}
                                 >
-                                    <XAxis type='number' domain={[0, 9000000]} />
+                                    <XAxis type='number' domain={[0, 10000000]} />
                                     <YAxis type='category' dataKey='name' />
                                     <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
                                         <LabelList dataKey='value' position='right' />
