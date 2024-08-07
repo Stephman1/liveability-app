@@ -223,7 +223,7 @@ export default function ZipCodePage() {
         <p>{zip_code} is a zip code in {zipData.State}, an area in the {country}.</p>
         </Typography>
         <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 150 }} aria-label="simple table">
+      <Table sx={{ minWidth: 50 }} aria-label="simple table">
         <TableHead>
           <TableRow>
             <TableCell>Category</TableCell>
@@ -267,7 +267,7 @@ export default function ZipCodePage() {
                                 >
                                     <XAxis type='number' domain={[0, 10000000]} />
                                     <YAxis type='category' dataKey='name' />
-                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                                    <Bar dataKey='value' stroke='#3994F2' fill='#3994F2' >
                                         <LabelList dataKey='value' position='right' />
                                     </Bar>
                                 </BarChart>
@@ -281,7 +281,7 @@ export default function ZipCodePage() {
                                 >
                                     <XAxis type='number' domain={[0, 90000]} />
                                     <YAxis type='category' dataKey='name' />
-                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                                    <Bar dataKey='value' stroke='#3994F2' fill='#3994F2' >
                                         <LabelList dataKey='value' position='right' />
                                     </Bar>
                                 </BarChart>
@@ -307,7 +307,7 @@ export default function ZipCodePage() {
                                 >
                                     <XAxis type='number' domain={[0, 100]} />
                                     <YAxis type='category' dataKey='name' />
-                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                                    <Bar dataKey='value' stroke='#3994F2' fill='#3994F2' >
                                         <LabelList dataKey='value' position='right' />
                                     </Bar>
                                 </BarChart>
@@ -321,7 +321,7 @@ export default function ZipCodePage() {
                                 >
                                     <XAxis type='number' domain={[0, 20]} />
                                     <YAxis type='category' dataKey='name' />
-                                    <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                                    <Bar dataKey='value' stroke='#3994F2' fill='#3994F2' >
                                         <LabelList dataKey='value' position='right' />
                                     </Bar>
                                 </BarChart>
@@ -332,7 +332,7 @@ export default function ZipCodePage() {
 
 
 
-                <Button >Housing Sqft Price</Button>
+                {zipData.AverageBlended$SqftPrice && <><Button >Housing Sqft Price</Button>
                 <div style={{ margin: 20 }}>
                 <ResponsiveContainer height={250}>
                     <BarChart
@@ -342,12 +342,12 @@ export default function ZipCodePage() {
                     >
                         <XAxis type='number' domain={[0, 4200]} />
                         <YAxis type='category' dataKey='name' />
-                        <Bar dataKey='value' stroke='#8884d8' fill='#8884d8' >
+                        <Bar dataKey='value' stroke='#3994F2' fill='#3994F2' >
                             <LabelList dataKey='value' position='right' />
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>
-                </div>
+                </div></>}
                 
 
 
@@ -375,7 +375,7 @@ export default function ZipCodePage() {
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="Rent" stroke="#8884d8" />
+                        <Line type="monotone" dataKey="Rent" stroke="#3994F2" />
                     </LineChart>
                 </ResponsiveContainer>
             </Box>
