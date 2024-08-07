@@ -3,6 +3,13 @@ import { Box, Button, ButtonGroup, Container, Card, Chip, Typography, Stack, Tex
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, LabelList, LineChart, Line, CartesianGrid, Tooltip, Legend, } from 'recharts';
 import { useParams, useNavigate } from 'react-router-dom';
 import SearchIcon from '@mui/icons-material/Search';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
 
 const config = require('../config.json');
 
@@ -129,7 +136,38 @@ export default function ZipCodePage() {
         setLifeWalkChartType(type);
     }
     
-        
+    function createData(categories, values, avgValues) {
+        return { categories, values, avgValues };
+      }
+      
+      const rows = [];
+
+
+    if (zipData.AvgPrice) {
+        rows.push(createData('Avg. Property Price', `$ ${parseFloat(zipData.AvgPrice).toLocaleString()}`, `$ ${parseFloat(avgNatHousingPrice).toLocaleString()}`))
+    }
+    if (zipData.AvgRent) {
+        rows.push(createData('Average Rental Price', `$ ${parseFloat(zipData.AvgRent).toLocaleString()}`, `$ ${parseFloat(avgNatRentalPrice).toLocaleString()}`))
+    }
+    if (zipData.LifeExpectancy) {
+        rows.push(createData('Life Expectancy', zipData.LifeExpectancy, avgNatLifeExpectancy))
+    }
+    if (zipData.Walkability) {
+        rows.push(createData('Walkability Score', zipData.Walkability, avgWalkability))
+    }
+    if (zipData.AQIRating) {
+        rows.push(createData('Air Quality Score', zipData.AQIRating, "-"))
+    }
+
+    if (zipData.SocialRent) {
+        rows.push(createData('Social Rent', zipData.SocialRent))
+    }
+    if (zipData.AvgHouseholdIncome) {
+        rows.push(createData('Avg. Household Income', zipData.AvgHouseholdIncome))
+    }
+    if (zipData.AverageBlended$SqftPrice) {
+        rows.push(createData('Avg. Housing Sqft Price', zipData.AverageBlended$SqftPrice, avgSqftPrice))
+    }
         
 
     return (
@@ -183,9 +221,32 @@ export default function ZipCodePage() {
         <Card variant="outlined" sx={{p:2, m:1}}>
         <Typography variant="body"> 
         <p>{zip_code} is a zip code in {zipData.State}, an area in the {country}.</p>
-        <p>Avg Housing Price: ${zipData.AvgPrice} &emsp;&emsp; Avg Rent: ${zipData.AvgRent} &emsp;&emsp; Life Expectancy: {zipData.LifeExpectancy} years</p>
-        <p>Walkability: {zipData.Walkability} &emsp;&emsp; Air Quality: <b>{zipData.AQIRating}</b> &emsp;&emsp; Social Rent: {zipData.SocialRent} &emsp;&emsp; Avg Household Income: ${zipData.AvgHouseholdIncome} &emsp;&emsp; Avg Housing Sqft Price: ${zipData.AverageBlended$SqftPrice}</p>
         </Typography>
+        <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 150 }} aria-label="simple table">
+        <TableHead>
+          <TableRow>
+            <TableCell>Category</TableCell>
+            <TableCell align="right">Value</TableCell>
+            <TableCell align="right">National Averages</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow
+              key={row.categories}
+              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+            >
+              <TableCell component="th" scope="row">
+                {row.categories}
+              </TableCell>
+              <TableCell align="right">{row.values}</TableCell>
+              <TableCell align="right">{row.avgValues}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
         </Card>
         
 
