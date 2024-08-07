@@ -124,7 +124,7 @@ export default function ExploreSimilarPage() {
                         </IconButton>
                 </Stack>
             </Box>
-            <div style={{ display: 'flex', overflowX: 'auto' }}>
+            {threeSimilarZips.length === 3 && <><div style={{ display: 'flex', overflowX: 'auto' }}>
                 {[zipData1, zipData2, zipData3, zipData4].map((zipData, index) => (
                     <ZipCodeCard
                     key={index}
@@ -164,6 +164,8 @@ export default function ExploreSimilarPage() {
                         />
                 </Stack>
             </Box> 
+            </>}
         </Container>
+
     );
 }
