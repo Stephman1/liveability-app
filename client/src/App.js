@@ -7,6 +7,7 @@ import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
 import ZipCodePage from "./pages/ZipCodePage";
 import ComparisonPage from "./pages/ComparisonPage";
+import ExploreSimilarPage from "./pages/ExploreSimilarPage";
 
 // createTheme enables you to customize the look and feel of your app past the default
 // in this case, we only change the color scheme
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/zip_code_view/:zip_code" element={<ZipCodePage />} />
           <Route path="/comparison_view/:zip_code1/:zip_code2" element={<ComparisonPage />} />
+          <Route path="/explore_similar/" element={<ExploreSimilarPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

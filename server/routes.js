@@ -208,7 +208,7 @@ const search_historical_property_data = async function(req, res) {
 
 // Route 5: GET /search_similar_zips/:zip
 const search_similar_zips = async function(req, res) {
-    // Return all zip codes that are similar to the zip code input by the user ordered by state and zip code (ascending).
+    // Return 3 random zip codes that are similar to the zip code input by the user
     const zipcode = req.params.zip;
     const regex = /[a-zA-Z]/;
 
@@ -255,7 +255,9 @@ const searchSimilarZips = (params) => {
         const avg_price = params.avgPrice ? Number(params.avgPrice) : null;
         const avg_rent = params.avgRent ? Number(params.avgRent) : null;
         const life_expectancy = params.lifeExpectancy ? Number(params.lifeExpectancy) : null;
-        const AQIRating = params.AQIRating ? `${params.AQIRating}` : null;
+        const AQIRating = params.airQuality ? `${params.airQuality}` : null;
+        const walkability = params.walkability ? Number(params.walkability)-1.5 : null;
+
 
         let us_where_clauses = [];
         let uk_where_clauses = [];
@@ -279,6 +281,9 @@ const searchSimilarZips = (params) => {
             us_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
             uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
         }
+        if (walkability !== null) {
+            us_where_clauses.push(`NatWalkInd IS NOT NULL AND NatWalkInd > ${walkability}`);
+        }
 
         let us_where_clause = us_where_clauses.length > 0 ? 'WHERE ' + us_where_clauses.join(' AND ') : '';
         let uk_where_clause = uk_where_clauses.length > 0 ? 'WHERE ' + uk_where_clauses.join(' AND ') : '';
@@ -294,17 +299,17 @@ const searchSimilarZips = (params) => {
             )
             SELECT * FROM (
             (SELECT p.Zip AS Zip, State, AvgPrice, AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'US' AS Country,
-            AQI_Rating AS AQIRating
+            AQI_Rating AS AQIRating, NatWalkInd AS Walkability
             FROM LatestPropertyPrices p LEFT OUTER JOIN LatestRentalPrices r ON p.Zip = r.Zip 
             LEFT OUTER JOIN USLifeExpectancy l ON l.Zip = p.Zip
+            LEFT OUTER JOIN USZipWalkability w ON w.Zip = p.Zip
             LEFT OUTER JOIN MaterializedUSAirQuality q ON q.Zip = p.Zip
             ${us_where_clause})
             UNION ALL
-            (SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating
+            (SELECT p.Sector AS Zip, e.LocalArea AS State, (AvgAskingPrice * 1.29) AS AvgPrice, (AvgAskingRent * 1.29) AS AvgRent, ROUND(LifeExpectancy, 2) AS LifeExpectancy, 'UK' AS Country, AQIRating, 'NA' as Walkability
             FROM UKProperties p LEFT OUTER JOIN UKLifeExpectancy e ON p.Sector = e.Sector
             LEFT OUTER JOIN MaterializedUKAirQuality f ON f.Sector = p.Sector
             ${uk_where_clause})) AS combinedResults
-            ORDER BY Country, State, Zip
             `, [],
             (err, data) => {
             if (err) {
@@ -312,13 +317,13 @@ const searchSimilarZips = (params) => {
                 reject(new Error("Database query failed"))
             } 
             else if (data.length === 0){
-                reject(new Error("No data found for zipcode: " + zipcode))
+                reject(new Error("No data found for specified parameters"))
             }
             else {
-                if (data.length > 20){ // trim down results by selecting random 20 zip codes
+                if (data.length > 3){ // trim down results by selecting random 20 zip codes
                     similarZips = []
                     indices = new Set();
-                    for (let i=0; i < 20; i++){
+                    for (let i=0; i < 3; i++){
                         while(true){
                             randInd = Math.floor(Math.random()*data.length)
                             if (!indices.has(randInd)){

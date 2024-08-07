@@ -40,6 +40,7 @@ export default function NavBar() {
           <NavText href='/' text='Liveability App' isMain />
           <NavText href="/zip_code_view/undefined" text='Zip Code' />
           <NavText href="comparison_view/undefined/undefined" text='Comparison' />
+          <NavText href="/explore_similar/" text='Explore Similar' />
           {/*<NavText href='/songs' text='SONGS' />*/}
         </Toolbar>
       </Container>
