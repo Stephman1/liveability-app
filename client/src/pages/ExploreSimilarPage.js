@@ -74,6 +74,7 @@ export default function ExploreSimilarPage() {
         try {
             setCountry("United Kingdom");
             const response = await fetch(`http://${config.server_host}:${config.server_port}/search_uk_zip/${zip_code}`).then(res => res.json());
+            response.Country= "United Kingdom"
             setZipData(response);
         }
         catch(err) {
@@ -84,6 +85,7 @@ export default function ExploreSimilarPage() {
         try { 
             setCountry("United States");
             const response = await fetch(`http://${config.server_host}:${config.server_port}/search_us_zip/${zip_code}`).then(res => res.json());
+            response.Country= "United States"
             setZipData(response);
         }
         catch(err) {
@@ -127,7 +129,7 @@ export default function ExploreSimilarPage() {
                     <ZipCodeCard
                     key={index}
                     zipCode={zipData.Zip}
-                    country={zipData.country}
+                    country={zipData.Country}
                     zipData={zipData}
                     />
                 ))}
