@@ -120,7 +120,7 @@ const search_all_zips = async function(req, res) {
         uk_where_clauses.push(`LifeExpectancy IS NOT NULL AND LifeExpectancy > ${life_expectancy}`);
     }
 
-    if (AQIRating !== null) {
+    if (AQIRating !== null && AQIRating !== 'All') {
         us_where_clauses.push(`AQI_Rating IS NOT NULL AND AQI_Rating = '${AQIRating}'`);
         uk_where_clauses.push(`AQIRating IS NOT NULL AND AQIRating = '${AQIRating}'`);
     }

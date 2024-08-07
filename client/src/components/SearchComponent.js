@@ -17,6 +17,7 @@ export default function SearchComponent() {
   const [life_exp, setLifeExp] = useState(null);
   const [avg_price, setAvgPrice] = useState(null);
   const [avg_rent, setAvgRent] = useState(null);
+  const [aqi_rating, setAQIRating] = useState('All');
 
   useEffect(() => {
     fetch(`http://${config.server_host}:${config.server_port}/search_all_zips`)
@@ -33,7 +34,8 @@ export default function SearchComponent() {
       `&lifeExpectancy=${life_exp}` +
       `&avgPrice=${avg_price}` +
       `&avgRent=${avg_rent}` +
-      `&country=${country}`
+      `&country=${country}` +
+      `&AQIRating=${aqi_rating}`
     )
       .then(res => res.json())
       .then(resJson => {
@@ -48,12 +50,13 @@ export default function SearchComponent() {
     setAvgPrice(null);
     setAvgRent(null);
     setLifeExp(null);
+    setAQIRating('All');
     setCountry('Both');
     setZip('');
     setState('');
   }
 
-  // This defines the columns of the table of songs used by the DataGrid component.
+  // This defines the columns of the table of zip codes used by the DataGrid component.
   // The format of the columns array and the DataGrid component itself is very similar to our
   // LazyTable component. The big difference is we provide all data to the DataGrid component
   // instead of loading only the data we need (which is necessary in order to be able to sort by column)
@@ -65,7 +68,8 @@ export default function SearchComponent() {
     { field: 'Country', headerName: 'Country',  width: 100 },
     { field: 'LifeExpectancy', headerName: 'Life Expectancy (Years)',  width: 200 },
     { field: 'AvgPrice', headerName: 'Average Housing Price',  width: 200 },
-    { field: 'AvgRent', headerName: 'Average Rent',  width: 200 }
+    { field: 'AvgRent', headerName: 'Average Rent',  width: 200 },
+    { field: 'AQIRating', headerName: 'Air Quality',  width: 200 },
   ]
 
   // This component makes uses of the Grid component from MUI (https://mui.com/material-ui/react-grid/).
@@ -79,13 +83,13 @@ export default function SearchComponent() {
     <Container>
       <h2>Search Areas</h2>
       <Grid container spacing={6}>
-        <Grid item xs={4}>
+        <Grid item xs={6}>
           <TextField label='Zip Code' value={zip} onChange={(e) => setZip(e.target.value)} style={{ width: "100%" }}/>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={6}>
           <TextField label='State' value={state} onChange={(e) => setState(e.target.value)} style={{ width: "100%" }}/>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={6}>
           <FormControl fullWidth>
             <InputLabel id="demo-simple-select-label">Countries</InputLabel>
             <Select
@@ -99,7 +103,24 @@ export default function SearchComponent() {
                 <MenuItem value={'US'}>US</MenuItem>
                 <MenuItem value={'Both'}>Both</MenuItem>
             </Select>
-</FormControl>
+          </FormControl>
+        </Grid>
+        <Grid item xs={6}>
+          <FormControl fullWidth>
+            <InputLabel id="demo-simple-select-label">Air Quality Rating</InputLabel>
+            <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={aqi_rating}
+                label="AQI Rating"
+                onChange={(e) => setAQIRating(e.target.value)}
+            >
+                <MenuItem value={'All'}>All</MenuItem>
+                <MenuItem value={'Good'}>Good</MenuItem>
+                <MenuItem value={'Moderate'}>Moderate</MenuItem>
+                <MenuItem value={'Poor'}>Poor</MenuItem>
+            </Select>
+          </FormControl> 
         </Grid>
         <Grid item xs={4}>
           <p>Life Expectancy</p>
