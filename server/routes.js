@@ -412,61 +412,48 @@ const search_average = async function(req, res) {
     const country = req.params.country.toUpperCase();
     const type = req.params.type;
     let search_type = '';
+    let search_query = ``;
 
     if (country == 'US') {
         if (type == 'walkability') {
             search_type = 'Walkability';
+            search_query = `SELECT AVG(NatWalkInd) AS AverageValue FROM USZipWalkability`;
         }
         else if (type == 'property_price') {
             search_type = 'USPropertyPrice';
+            search_query = `SELECT AVG(AvgPrice) AS AverageValue FROM LatestPropertyPrices`;
         }
         else if (type == 'rental_price') {
             search_type = 'USRentalPrice';
+            search_query = `SELECT AVG(AvgRent) AS AverageValue FROM LatestRentalPrices`;
         }
         else if (type == 'life_expectancy') {
             search_type = 'USLifeExpectancy';
+            search_query = `SELECT AVG(LifeExpectancy) AS AverageValue FROM USLifeExpectancy`;
         }
     }
     else if (country == 'UK') {
         if (type == 'sqft_price') {
             search_type = 'AvgBlendedSqft';
+            search_query = `SELECT AVG(AvgBlendedSqftPrice * 1.29) AS AverageValue FROM UKProperties`;
         }
         else if (type == 'property_price') {
             search_type = 'UKPropertyPrice';
+            search_query = `SELECT AVG(AvgAskingPrice * 1.29) AS AverageValue FROM UKProperties`;
         }
         else if (type == 'rental_price') {
             search_type = 'UKRentalPrice';
+            search_query = `SELECT AVG(AvgAskingRent * 1.29) AS AverageValue FROM UKProperties`;
         }
         else if (type == 'life_expectancy') {
             search_type = 'UKLifeExpectancy';
+            search_query = `SELECT AVG(Combined) AS AverageValue FROM UKLifeExpectancy`;
         }
     }
 
     connection.query(`
-        WITH USLifeExpectancy AS (
-            SELECT AVG(LifeExpectancy) AS AverageValue
-            FROM USLifeExpectancy
-        ), Walkability AS (
-            SELECT AVG(NatWalkInd) AS AverageValue
-            FROM USZipWalkability
-        ), USPropertyPrice AS (
-            SELECT AVG(AvgPrice) AS AverageValue
-            FROM LatestPropertyPrices
-        ), USRentalPrice AS (
-            SELECT AVG(AvgRent) AS AverageValue
-            FROM LatestRentalPrices
-        ), UKPropertyPrice AS (
-            SELECT AVG(AvgAskingPrice * 1.29) AS AverageValue
-            FROM UKProperties
-        ), UKRentalPrice AS (
-            SELECT AVG(AvgAskingRent * 1.29) AS AverageValue
-            FROM UKProperties
-        ), UKLifeExpectancy AS (
-            SELECT AVG(Combined) AS AverageValue
-            FROM UKLifeExpectancy
-        ), AvgBlendedSqft AS (
-            SELECT AVG(AvgBlendedSqftPrice * 1.29) AS AverageValue
-            FROM UKProperties
+        WITH ${search_type} AS (
+            ${search_query}
         )
         SELECT ROUND(AverageValue, 2) AS ?
         FROM ${search_type}
