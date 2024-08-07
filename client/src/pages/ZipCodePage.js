@@ -163,10 +163,10 @@ export default function ZipCodePage() {
         rows.push(createData('Social Rent', zipData.SocialRent))
     }
     if (zipData.AvgHouseholdIncome) {
-        rows.push(createData('Avg. Household Income', zipData.AvgHouseholdIncome))
+        rows.push(createData('Avg. Household Income', `$ ${parseFloat(zipData.AvgHouseholdIncome).toLocaleString()}`))
     }
     if (zipData.AverageBlended$SqftPrice) {
-        rows.push(createData('Avg. Housing Sqft Price', zipData.AverageBlended$SqftPrice, avgSqftPrice))
+        rows.push(createData('Avg. Housing Sqft Price', `$ ${parseFloat(zipData.AverageBlended$SqftPrice).toLocaleString()}`, `$ ${parseFloat(avgSqftPrice).toLocaleString()}`))
     }
         
 
