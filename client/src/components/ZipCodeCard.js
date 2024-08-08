@@ -56,8 +56,6 @@ function ZipCodeCard({ zipCode, country, zipData }) {
 
         <Typography component="legend">Air Quality: <b>{aqiRating}</b></Typography>
         <Rating name="read-only" value={aqiVal} readOnly max={3}/>
-
-        {!(sqftPrice === "NA") && <p>Housing Sqft Price: ${sqftPrice}</p>}
         </Typography>
         <TableContainer component={Paper}>
       <Table sx={{ minWidth: 250 }} aria-label="simple table">
