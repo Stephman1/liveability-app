@@ -1,9 +1,9 @@
 {
-    "rds_host": "cis5500-project.ccjnqve9pyix.us-east-1.rds.amazonaws.com",
-    "rds_port": "3306",
-    "rds_user": "gosql",
-    "rds_password": "Liv4bility2024",
-    "rds_db": "Livability",
-    "server_host": "localhost",
-    "server_port": "8080"
+    "rds_host": "host",
+    "rds_port": "port",
+    "rds_user": "user",
+    "rds_password": "password",
+    "rds_db": "database",
+    "server_host": "server_host",
+    "server_port": "server_port"
   }
