@@ -1,4 +1,4 @@
-# 550-liveability-app
+# Liveability app
 
 ## **Overview**
 
