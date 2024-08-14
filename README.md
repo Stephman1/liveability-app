@@ -15,6 +15,8 @@ A liveability application that allows users to compare different zip codes and l
 
 ## **Usage**
 
+![Liveability app demo video](https://drive.google.com/file/d/11ATjfy7DGKuMu_8Q2TJAAkCFDIqMYy0G/view?usp=sharing)
+
 ### **Prerequisites** 
 You will need to install the latest version of Node.js on your machine. You should verify
 that the following commands run and give a reasonable output on your terminal:
