@@ -1,9 +1,0 @@
-{
-    "rds_host": "host",
-    "rds_port": "port",
-    "rds_user": "user",
-    "rds_password": "password",
-    "rds_db": "database",
-    "server_host": "server_host",
-    "server_port": "server_port"
-  }
