@@ -8,10 +8,10 @@ A liveability application that allows users to compare different zip codes and l
 
 **Authors**
 
-- Stephen Keeler - stephman1 – keelers@seas.upenn.edu - [GitHub](https://github.com/stephman1)
-- Shariq Lalani - slalani13 – shariqla@seas.upenn.edu - [GitHub](https://github.com/slalani13)
-- Paul Sterritt - psterritt5 – paulster@seas.upenn.edu - [GitHub](https://github.com/psterritt5)
-- Octavio Medina - octmedina – omedina@seas.upenn.edu - [GitHub](https://github.com/octmedina)
+- Stephen Keeler - stephman1 - [GitHub](https://github.com/stephman1)
+- Shariq Lalani - slalani13 – [GitHub](https://github.com/slalani13)
+- Paul Sterritt - psterritt5 – [GitHub](https://github.com/psterritt5)
+- Octavio Medina - octmedina – [GitHub](https://github.com/octmedina)
 
 ## **Usage**
 
